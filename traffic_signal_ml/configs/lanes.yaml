@@ -1,0 +1,35 @@
+# Lane Polygon ROI and Feature Extraction Configuration
+# Coordinates are in pixels for a standard 640x480 camera frame per approach.
+# Each camera feed (N, E, S, W) views its respective incoming approach lane.
+
+frame_width: 640
+frame_height: 480
+normalize_by_area: false
+anchor_point: "bottom_center"  # "bottom_center" or "center"
+feature_log_csv: "artifacts/feature_vectors_xt.csv"
+
+lanes:
+  N:
+    polygon:
+      - [120, 80]
+      - [520, 80]
+      - [600, 460]
+      - [40, 460]
+  E:
+    polygon:
+      - [120, 80]
+      - [520, 80]
+      - [600, 460]
+      - [40, 460]
+  S:
+    polygon:
+      - [120, 80]
+      - [520, 80]
+      - [600, 460]
+      - [40, 460]
+  W:
+    polygon:
+      - [120, 80]
+      - [520, 80]
+      - [600, 460]
+      - [40, 460]

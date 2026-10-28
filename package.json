@@ -1,0 +1,14 @@
+{
+  "name": "traffic-signal-system",
+  "version": "1.0.0",
+  "description": "Full-stack Adaptive Traffic Signal Control with FastAPI and React",
+  "scripts": {
+    "dev:backend": "nodemon --watch traffic_signal_ml/src --ext py --exec python -m uvicorn src.server.api:app --host 0.0.0.0 --port 8000 --app-dir traffic_signal_ml",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5",
+    "nodemon": "^3.1.9"
+  }
+}

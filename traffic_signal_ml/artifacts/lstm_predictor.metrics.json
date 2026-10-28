@@ -1,0 +1,10 @@
+{
+  "trained_on_synthetic": true,
+  "window_size": 10,
+  "best_val_mse": 0.39435,
+  "test_mse": 0.46428,
+  "test_mae": 0.42306,
+  "train_samples": 2090,
+  "val_samples": 440,
+  "test_samples": 440
+}

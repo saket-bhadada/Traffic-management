@@ -1,0 +1,45 @@
+# Environments and Secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+
+# Python and Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+build/
+.npm/
+
+# Datasets, Model Weights & Heavy Binaries
+data/
+data/raw/
+data/unified/
+data/splits/
+traffic_signal_ml/data/
+runs/
+traffic_signal_ml/artifacts/*.pt
+traffic_signal_ml/artifacts/demo_videos/
+*.mp4
+*.avi
+*.pt
+*.onnx
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

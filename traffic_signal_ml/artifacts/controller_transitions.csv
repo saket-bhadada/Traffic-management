@@ -1,0 +1,5 @@
+timestamp,from_state,to_state,active_lane,next_lane,reason
+8.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,N,N,Emergency on lane S; remaining green (13.0s) > 4.0s -> truncating green to 2.0s
+10.00,TRUNCATED_GREEN,AMBER,N,N,Truncated green expired on N; entering AMBER before emergency lane S
+13.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+14.00,ALL_RED,EMERGENCY_GREEN,N,S,ALL_RED expired; granting EMERGENCY_GREEN to lane S

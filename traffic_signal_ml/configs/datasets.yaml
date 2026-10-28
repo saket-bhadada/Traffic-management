@@ -1,0 +1,52 @@
+# Dataset and Split Configuration
+seed: 42
+raw_data_dir: "data/raw"
+unified_data_dir: "data/unified"
+splits_dir: "data/splits"
+
+split_ratios:
+  train: 0.70
+  val: 0.15
+  test: 0.15
+
+datasets:
+  - workspace: "roboflow-100"
+    project: "vehicles-q0x2v"
+    version: 2
+    format: "yolov8"
+    license: "CC BY 4.0"
+    url: "https://universe.roboflow.com/roboflow-100/vehicles-q0x2v"
+  - workspace: "vehicle-mscoco"
+    project: "vehicles-coco"
+    version: 1
+    format: "yolov8"
+    license: "CC BY 4.0"
+    url: "https://universe.roboflow.com/vehicle-mscoco/vehicles-coco"
+  - workspace: "indian-road-dataset"
+    project: "indian-roads-detection"
+    version: 1
+    format: "yolov8"
+    license: "CC BY 4.0"
+    url: "https://universe.roboflow.com/indian-road-dataset/indian-roads-detection"
+  - workspace: "ph-ambulance-dataset-with-augmentations"
+    project: "ph-ambulances"
+    version: 1
+    format: "yolov8"
+    license: "CC BY 4.0"
+    url: "https://universe.roboflow.com/ph-ambulance-dataset-with-augmentations/ph-ambulances"
+  - workspace: "himank-vpetc"
+    project: "ambulance-4bova"
+    version: 1
+    format: "yolov8"
+    license: "CC BY 4.0"
+    url: "https://universe.roboflow.com/himank-vpetc/ambulance-4bova"
+
+detector:
+  model_variant: "yolov8n"  # Switch between "yolov8n" and "yolov8s"
+  epochs: 50
+  imgsz: 640
+  batch: 16
+  conf_threshold: 0.25
+  iou_threshold: 0.45
+  weights_path: "artifacts/detector_best.pt"
+  metrics_output_path: "artifacts/detector_test_metrics.json"

@@ -1,0 +1,59 @@
+# Unified Class Mapping Configuration
+# Target classes:
+#   0: standard_vehicle
+#   1: emergency_vehicle
+# Any label not listed in label_to_class (after lowercase/strip/hyphen normalization) is dropped.
+
+classes:
+  0: "standard_vehicle"
+  1: "emergency_vehicle"
+
+label_to_class:
+  # 0: standard_vehicle
+  car: 0
+  cars: 0
+  automobile: 0
+  sedan: 0
+  suv: 0
+  van: 0
+  jeep: 0
+  pickup: 0
+  bus: 0
+  buses: 0
+  truck: 0
+  trucks: 0
+  lorry: 0
+  multi-axle truck: 0
+  multi_axle_truck: 0
+  multiaxle truck: 0
+  heavy truck: 0
+  trailer: 0
+  auto-rickshaw: 0
+  auto_rickshaw: 0
+  autorickshaw: 0
+  auto: 0
+  rickshaw: 0
+  three-wheeler: 0
+  three_wheeler: 0
+  tuk-tuk: 0
+  motorcycle: 0
+  motorcycles: 0
+  motorbike: 0
+  bike: 0
+  two-wheeler: 0
+  two_wheeler: 0
+  scooter: 0
+  vehicle: 0
+
+  # 1: emergency_vehicle
+  ambulance: 1
+  ambulances: 1
+  emergency: 1
+  emergency_vehicle: 1
+  emergency-vehicle: 1
+  fire engine: 1
+  fire_engine: 1
+  fire-engine: 1
+  fire truck: 1
+  fire_truck: 1
+  firetruck: 1

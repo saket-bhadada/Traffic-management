@@ -1,0 +1,47 @@
+# Adaptive Traffic Signal Controller & Preemption Configuration
+seed: 42
+
+# Clockwise phase cycle
+phase_order:
+  - "N"
+  - "E"
+  - "S"
+  - "W"
+
+# Adaptive green formula parameters:
+# green = clamp(base_green + k1 * C_lane + k2 * max(dC_dt, 0), min_green, max_green)
+base_green: 15.0
+k1: 1.5
+k2: 4.0
+min_green: 10.0
+max_green: 60.0
+
+# Intergreen clearance intervals
+amber_duration: 3.0
+all_red_duration: 1.0
+
+# Emergency preemption thresholds
+preempt_remaining_threshold: 4.0
+truncated_green_duration: 2.0
+
+# Fixed-time baseline controller settings (for comparison)
+fixed_green_duration: 30.0
+
+# LSTM queue growth predictor settings
+lstm:
+  window_size: 10
+  input_size: 8
+  hidden_size: 64
+  num_layers: 2
+  output_size: 4
+  learning_rate: 0.001
+  batch_size: 32
+  epochs: 15
+  weights_path: "artifacts/lstm_predictor.pt"
+
+# Simulation parameters
+simulation:
+  duration_seconds: 1800
+  saturation_discharge_rate: 1.5  # vehicles/second discharged during green
+  comparison_csv_path: "artifacts/sim_comparison.csv"
+  transitions_log_path: "artifacts/controller_transitions.csv"

@@ -1,0 +1,3 @@
+controller,average_wait_time_s,idle_green_time_s,throughput_vehicles,emergency_time_to_green_s,emergency_events
+Fixed-Timer Baseline (30s),150.43,577.0,1475,38.09,11
+Adaptive + Emergency Preemption,54.45,328.0,1668,5.18,11
