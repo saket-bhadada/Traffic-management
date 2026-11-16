@@ -1,5 +1,258 @@
 timestamp,from_state,to_state,active_lane,next_lane,reason
-8.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,N,N,Emergency on lane S; remaining green (13.0s) > 4.0s -> truncating green to 2.0s
-10.00,TRUNCATED_GREEN,AMBER,N,N,Truncated green expired on N; entering AMBER before emergency lane S
-13.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
-14.00,ALL_RED,EMERGENCY_GREEN,N,S,ALL_RED expired; granting EMERGENCY_GREEN to lane S
+15.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+18.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+19.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=16.5s)
+34.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+37.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+38.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=44.2s)
+50.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,S,S,Emergency on lane E; remaining green (17.5s) > 4.0s -> truncating green to 2.0s
+52.00,TRUNCATED_GREEN,AMBER,S,S,Truncated green expired on S; entering AMBER before emergency lane E
+55.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+56.00,ALL_RED,EMERGENCY_GREEN,S,E,ALL_RED expired; granting EMERGENCY_GREEN to lane E
+57.00,EMERGENCY_GREEN,AMBER,E,E,Emergency cleared on lane E (E_E==0); transitioning via AMBER/ALL_RED to resume clockwise phase W
+60.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+61.00,ALL_RED,ADAPTIVE_GREEN,E,W,Resuming clockwise cycle after preemption at phase W (initial adaptive green=16.5s)
+76.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+79.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+80.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+116.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+119.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+120.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=25.5s)
+136.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+139.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+140.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+166.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+169.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+170.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=36.0s)
+185.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+188.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+189.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+211.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+214.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+215.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=15.0s)
+220.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,E,E,Emergency on lane N; remaining green (11.0s) > 4.0s -> truncating green to 2.0s
+222.00,TRUNCATED_GREEN,AMBER,E,E,Truncated green expired on E; entering AMBER before emergency lane N
+225.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+226.00,ALL_RED,EMERGENCY_GREEN,E,N,ALL_RED expired; granting EMERGENCY_GREEN to lane N
+227.00,EMERGENCY_GREEN,AMBER,N,N,Emergency cleared on lane N (E_N==0); transitioning via AMBER/ALL_RED to resume clockwise phase S
+230.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+231.00,ALL_RED,ADAPTIVE_GREEN,N,S,Resuming clockwise cycle after preemption at phase S (initial adaptive green=51.8s)
+250.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+253.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+254.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=21.0s)
+270.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+273.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+274.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+307.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+310.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+311.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=22.5s)
+326.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+329.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+330.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+360.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,S,S,Emergency on lane E; remaining green (20.5s) > 4.0s -> truncating green to 2.0s
+362.00,TRUNCATED_GREEN,AMBER,S,S,Truncated green expired on S; entering AMBER before emergency lane E
+365.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+366.00,ALL_RED,EMERGENCY_GREEN,S,E,ALL_RED expired; granting EMERGENCY_GREEN to lane E
+367.00,EMERGENCY_GREEN,AMBER,E,E,Emergency cleared on lane E (E_E==0); transitioning via AMBER/ALL_RED to resume clockwise phase W
+370.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+371.00,ALL_RED,ADAPTIVE_GREEN,E,W,Resuming clockwise cycle after preemption at phase W (initial adaptive green=35.3s)
+387.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+390.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+391.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+419.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+422.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+423.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=46.5s)
+439.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+442.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+443.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=54.9s)
+462.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+465.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+466.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=22.5s)
+468.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,W,W,Emergency on lane S; remaining green (18.5s) > 4.0s -> truncating green to 2.0s
+470.00,TRUNCATED_GREEN,AMBER,W,W,Truncated green expired on W; entering AMBER before emergency lane S
+473.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+474.00,ALL_RED,EMERGENCY_GREEN,W,S,ALL_RED expired; granting EMERGENCY_GREEN to lane S
+475.00,EMERGENCY_GREEN,AMBER,S,S,Emergency cleared on lane S (E_S==0); transitioning via AMBER/ALL_RED to resume clockwise phase N
+478.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+479.00,ALL_RED,ADAPTIVE_GREEN,S,N,Resuming clockwise cycle after preemption at phase N (initial adaptive green=42.0s)
+498.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+501.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+502.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=18.0s)
+518.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+521.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+522.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+552.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+555.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+556.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=15.2s)
+572.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+575.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+576.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+611.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+614.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+615.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=36.0s)
+630.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+633.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+634.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+644.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,S,S,Emergency on lane E; remaining green (43.2s) > 4.0s -> truncating green to 2.0s
+646.00,TRUNCATED_GREEN,AMBER,S,S,Truncated green expired on S; entering AMBER before emergency lane E
+649.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+650.00,ALL_RED,EMERGENCY_GREEN,S,E,ALL_RED expired; granting EMERGENCY_GREEN to lane E
+651.00,EMERGENCY_GREEN,AMBER,E,E,Emergency cleared on lane E (E_E==0); transitioning via AMBER/ALL_RED to resume clockwise phase W
+654.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+655.00,ALL_RED,ADAPTIVE_GREEN,E,W,Resuming clockwise cycle after preemption at phase W (initial adaptive green=34.9s)
+671.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+674.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+675.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=45.2s)
+695.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+698.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+699.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=16.5s)
+714.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+717.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+718.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+747.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+750.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+751.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=18.0s)
+767.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+770.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+771.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+777.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,N,N,Emergency on lane W; remaining green (55.0s) > 4.0s -> truncating green to 2.0s
+779.00,TRUNCATED_GREEN,AMBER,N,N,Truncated green expired on N; entering AMBER before emergency lane W
+782.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+783.00,ALL_RED,EMERGENCY_GREEN,N,W,ALL_RED expired; granting EMERGENCY_GREEN to lane W
+784.00,EMERGENCY_GREEN,AMBER,W,W,Emergency cleared on lane W (E_W==0); transitioning via AMBER/ALL_RED to resume clockwise phase E
+787.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+788.00,ALL_RED,ADAPTIVE_GREEN,W,E,Resuming clockwise cycle after preemption at phase E (initial adaptive green=19.5s)
+804.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+807.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+808.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+840.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+843.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+844.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=27.0s)
+860.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+863.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+864.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+904.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+907.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+908.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=43.5s)
+923.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+926.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+927.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=54.2s)
+948.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+951.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+952.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=21.0s)
+967.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+970.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+971.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+982.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,N,N,Emergency on lane E; remaining green (32.8s) > 4.0s -> truncating green to 2.0s
+984.00,TRUNCATED_GREEN,AMBER,N,N,Truncated green expired on N; entering AMBER before emergency lane E
+987.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+988.00,ALL_RED,EMERGENCY_GREEN,N,E,ALL_RED expired; granting EMERGENCY_GREEN to lane E
+989.00,EMERGENCY_GREEN,AMBER,E,E,Emergency cleared on lane E (E_E==0); transitioning via AMBER/ALL_RED to resume clockwise phase E
+992.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+993.00,ALL_RED,ADAPTIVE_GREEN,E,E,Resuming clockwise cycle after preemption at phase E (initial adaptive green=18.0s)
+1009.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+1012.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+1013.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+1040.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+1043.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+1044.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=18.0s)
+1060.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+1063.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+1064.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+1106.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+1109.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+1110.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=48.0s)
+1126.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+1129.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+1130.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+1149.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+1152.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+1153.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=39.0s)
+1169.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+1172.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+1173.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=49.5s)
+1193.00,ADAPTIVE_GREEN,ADAPTIVE_GREEN,N,E,Emergency on lane E; remaining green (0.0s) <= 4.0s -> letting green expire normally
+1193.00,ADAPTIVE_GREEN,AMBER,N,N,Preemption expiry on N for emergency on E
+1196.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+1197.00,ALL_RED,EMERGENCY_GREEN,N,E,ALL_RED expired; granting EMERGENCY_GREEN to lane E
+1198.00,EMERGENCY_GREEN,AMBER,E,E,Emergency cleared on lane E (E_E==0); transitioning via AMBER/ALL_RED to resume clockwise phase E
+1201.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+1202.00,ALL_RED,ADAPTIVE_GREEN,E,E,Resuming clockwise cycle after preemption at phase E (initial adaptive green=18.0s)
+1217.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+1220.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+1221.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=41.2s)
+1241.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+1244.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+1245.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=16.6s)
+1260.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+1263.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+1264.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+1298.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+1301.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+1302.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=18.0s)
+1317.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+1320.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+1321.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+1331.00,ADAPTIVE_GREEN,EMERGENCY_GREEN,S,S,Emergency detected on active green lane S; holding green until E_S==0
+1332.00,EMERGENCY_GREEN,AMBER,S,S,Emergency cleared on lane S (E_S==0); transitioning via AMBER/ALL_RED to resume clockwise phase W
+1335.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+1336.00,ALL_RED,ADAPTIVE_GREEN,S,W,Resuming clockwise cycle after preemption at phase W (initial adaptive green=28.8s)
+1352.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+1355.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+1356.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
+1376.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+1379.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+1380.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=34.5s)
+1395.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+1398.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+1399.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+1427.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+1430.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+1431.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=16.7s)
+1447.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+1450.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+1451.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=52.8s)
+1473.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+1476.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+1477.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=27.0s)
+1493.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+1496.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+1497.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+1538.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+1541.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+1542.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=22.5s)
+1549.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,W,W,Emergency on lane S; remaining green (9.1s) > 4.0s -> truncating green to 2.0s
+1551.00,TRUNCATED_GREEN,AMBER,W,W,Truncated green expired on W; entering AMBER before emergency lane S
+1554.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+1555.00,ALL_RED,EMERGENCY_GREEN,W,S,ALL_RED expired; granting EMERGENCY_GREEN to lane S
+1556.00,EMERGENCY_GREEN,AMBER,S,S,Emergency cleared on lane S (E_S==0); transitioning via AMBER/ALL_RED to resume clockwise phase N
+1559.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+1560.00,ALL_RED,ADAPTIVE_GREEN,S,N,Resuming clockwise cycle after preemption at phase N (initial adaptive green=60.0s)
+1602.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+1605.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+1606.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=40.5s)
+1621.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+1624.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+1625.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=58.3s)
+1646.00,ADAPTIVE_GREEN,AMBER,S,S,Adaptive green expired normally on lane S
+1649.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+1650.00,ALL_RED,ADAPTIVE_GREEN,S,W,Advancing clockwise cycle to phase W (initial adaptive green=28.5s)
+1666.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+1669.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+1670.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=51.5s)
+1690.00,ADAPTIVE_GREEN,AMBER,N,N,Adaptive green expired normally on lane N
+1693.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+1694.00,ALL_RED,ADAPTIVE_GREEN,N,E,Advancing clockwise cycle to phase E (initial adaptive green=21.0s)
+1709.00,ADAPTIVE_GREEN,AMBER,E,E,Adaptive green expired normally on lane E
+1712.00,AMBER,ALL_RED,E,E,Amber expired on E; entering ALL_RED clearance
+1713.00,ALL_RED,ADAPTIVE_GREEN,E,S,Advancing clockwise cycle to phase S (initial adaptive green=60.0s)
+1737.00,ADAPTIVE_GREEN,TRUNCATED_GREEN,S,S,Emergency on lane N; remaining green (16.0s) > 4.0s -> truncating green to 2.0s
+1739.00,TRUNCATED_GREEN,AMBER,S,S,Truncated green expired on S; entering AMBER before emergency lane N
+1742.00,AMBER,ALL_RED,S,S,Amber expired on S; entering ALL_RED clearance
+1743.00,ALL_RED,EMERGENCY_GREEN,S,N,ALL_RED expired; granting EMERGENCY_GREEN to lane N
+1744.00,EMERGENCY_GREEN,AMBER,N,N,Emergency cleared on lane N (E_N==0); transitioning via AMBER/ALL_RED to resume clockwise phase W
+1747.00,AMBER,ALL_RED,N,N,Amber expired on N; entering ALL_RED clearance
+1748.00,ALL_RED,ADAPTIVE_GREEN,N,W,Resuming clockwise cycle after preemption at phase W (initial adaptive green=18.0s)
+1764.00,ADAPTIVE_GREEN,AMBER,W,W,Adaptive green expired normally on lane W
+1767.00,AMBER,ALL_RED,W,W,Amber expired on W; entering ALL_RED clearance
+1768.00,ALL_RED,ADAPTIVE_GREEN,W,N,Advancing clockwise cycle to phase N (initial adaptive green=60.0s)
