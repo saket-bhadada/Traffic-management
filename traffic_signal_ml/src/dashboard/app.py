@@ -22,7 +22,7 @@ from src.evaluation.compare import load_controller_configs
 from src.features.feature_vector import XT_COLUMNS, extract_x_t_from_detections
 from src.features.lane_density import LaneConfig
 from src.feeds.base import LANES
-from src.feeds.video_file_feed import VideoFeedConfig, VideoFileFeed, generate_synthetic_four_way_videos
+from src.feeds.video_file_feed import VideoFeedConfig, VideoFileFeed, ensure_demo_videos
 from src.prediction.lstm_model import OnlineQueuePredictor
 from src.prediction.train_lstm import load_lstm_config
 
@@ -92,9 +92,7 @@ def main() -> None:
     lstm_cfg = load_lstm_config(controller_yaml, base_dir=ROOT_DIR)
 
     video_dir = ROOT_DIR / "artifacts" / "demo_videos"
-    video_paths = {lane: video_dir / f"approach_{lane}.mp4" for lane in LANES}
-    if not all(p.exists() for p in video_paths.values()):
-        generate_synthetic_four_way_videos(video_dir, duration_seconds=30, fps=5, seed=42)
+    video_paths = ensure_demo_videos(video_dir)
 
     tick_slider = st.sidebar.slider("Replay Tick (seconds @ 1 FPS)", min_value=0, max_value=29, value=9, step=1)
     normalize_flag = st.sidebar.checkbox("Normalize counts by ROI area", value=lane_cfg.normalize_by_area)

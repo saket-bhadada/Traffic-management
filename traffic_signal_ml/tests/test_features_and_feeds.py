@@ -19,6 +19,7 @@ from src.feeds.base import LANES
 from src.feeds.video_file_feed import (
     VideoFeedConfig,
     VideoFileFeed,
+    ensure_demo_videos,
     generate_synthetic_four_way_videos,
 )
 
@@ -120,3 +121,14 @@ def test_four_lanes_share_timestamp_per_tick(tmp_path: Path) -> None:
         feed.close()
 
     assert timestamps == [0.0, 1.0, 2.0, 3.0, 4.0]
+
+
+def test_ensure_demo_videos_does_not_overwrite_existing_files(tmp_path: Path) -> None:
+    existing_video = tmp_path / "approach_N.mp4"
+    original_contents = b"keep this existing video"
+    existing_video.write_bytes(original_contents)
+
+    with pytest.raises(FileNotFoundError, match="Refusing to generate synthetic"):
+        ensure_demo_videos(tmp_path)
+
+    assert existing_video.read_bytes() == original_contents
