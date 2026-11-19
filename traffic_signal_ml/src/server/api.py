@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 
 import cv2
 import numpy as np
+import yaml
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -26,10 +27,11 @@ from src.evaluation.compare import load_controller_configs
 from src.features.feature_vector import XT_COLUMNS, extract_x_t_from_detections
 from src.features.lane_density import LaneConfig
 from src.feeds.base import LANES
+from src.feeds.rtsp_feed import RTSPFeed, RTSPFeedConfig
 from src.feeds.video_file_feed import (
     VideoFeedConfig,
     VideoFileFeed,
-    generate_synthetic_four_way_videos,
+    ensure_demo_videos,
 )
 from src.prediction.lstm_model import OnlineQueuePredictor
 from src.prediction.train_lstm import load_lstm_config
@@ -72,15 +74,28 @@ class TrafficEngine:
         )
         self.lstm_cfg = load_lstm_config(controller_yaml, base_dir=self.root_dir)
 
+        feeds_yaml = self.root_dir / "configs" / "feeds.yaml"
+        with open(feeds_yaml, "r", encoding="utf-8") as f:
+            self.feed_config = yaml.safe_load(f) or {}
+        self.feed_source = str(self.feed_config.get("source", "video")).lower()
+        if self.feed_source not in {"video", "rtsp"}:
+            raise ValueError(
+                f"Unsupported feed source '{self.feed_source}' in {feeds_yaml}; "
+                "expected 'video' or 'rtsp'."
+            )
+
         self.video_dir = self.root_dir / "artifacts" / "demo_videos"
-        self.video_paths = {lane: self.video_dir / f"approach_{lane}.mp4" for lane in LANES}
-        if not all(p.exists() for p in self.video_paths.values()):
-            generate_synthetic_four_way_videos(self.video_dir, duration_seconds=30, fps=5, seed=42)
+        if self.feed_source == "video":
+            self.video_paths = ensure_demo_videos(self.video_dir)
+        else:
+            self.video_paths = {
+                lane: self.video_dir / f"approach_{lane}.mp4" for lane in LANES
+            }
 
         self.detector = Detector(self.det_cfg)
         self.predictor = OnlineQueuePredictor(self.lstm_cfg)
         self.controller = TrafficSignalController(config=self.sm_cfg)
-        self.feed = VideoFileFeed(VideoFeedConfig(video_paths=self.video_paths, target_fps=1.0))
+        self.feed = self._create_feed()
         self.feed_iter = iter(self.feed)
 
         self.last_timestamp: float = 0.0
@@ -90,12 +105,31 @@ class TrafficEngine:
         self.last_images_b64: Dict[str, str] = {}
         self.last_detections_summary: Dict[str, Dict[str, Any]] = {}
         self.is_running: bool = True
-        self.step_delay: float = 1.0  # 1 FPS default
+        self.step_delay: float = 0.0 if self.feed_source == "rtsp" else 1.0
+
+    def _create_feed(self) -> VideoFileFeed | RTSPFeed:
+        target_fps = float(self.feed_config.get("target_fps", 1.0))
+        if self.feed_source == "rtsp":
+            rtsp_urls = self.feed_config.get("rtsp_urls", {})
+            if not isinstance(rtsp_urls, dict):
+                raise ValueError("'rtsp_urls' in configs/feeds.yaml must be a lane-to-URL mapping.")
+            return RTSPFeed(
+                RTSPFeedConfig(
+                    rtsp_urls=rtsp_urls,
+                    target_fps=target_fps,
+                    reconnect_timeout_sec=float(
+                        self.feed_config.get("reconnect_timeout_sec", 5.0)
+                    ),
+                )
+            )
+        return VideoFileFeed(
+            VideoFeedConfig(video_paths=self.video_paths, target_fps=target_fps)
+        )
 
     def reset(self) -> None:
         """Reset feed and controller back to tick 0."""
         self.feed.close()
-        self.feed = VideoFileFeed(VideoFeedConfig(video_paths=self.video_paths, target_fps=1.0))
+        self.feed = self._create_feed()
         self.feed_iter = iter(self.feed)
         self.controller = TrafficSignalController(config=self.sm_cfg)
         self.predictor = OnlineQueuePredictor(self.lstm_cfg)

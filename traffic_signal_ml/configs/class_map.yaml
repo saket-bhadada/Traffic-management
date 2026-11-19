@@ -44,8 +44,24 @@ label_to_class:
   two_wheeler: 0
   scooter: 0
   vehicle: 0
+  rikshaw: 0
+  tempo: 0
+  big bus: 0
+  small bus: 0
+  bus-l-: 0
+  bus-s-: 0
+  big truck: 0
+  mid truck: 0
+  misc vehicle: 0
+  small truck: 0
+  truck-l-: 0
+  truck-m-: 0
+  truck-s-: 0
+  truck-xl-: 0
+  tractor: 0
 
   # 1: emergency_vehicle
+  "My First Project - v1 2025-02-17 5-45am": 1
   ambulance: 1
   ambulances: 1
   emergency: 1

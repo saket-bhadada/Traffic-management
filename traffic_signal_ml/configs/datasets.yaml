@@ -45,7 +45,7 @@ detector:
   model_variant: "yolov8n"  # Switch between "yolov8n" and "yolov8s"
   epochs: 50
   imgsz: 640
-  batch: 16
+  batch: 8
   conf_threshold: 0.25
   iou_threshold: 0.45
   weights_path: "artifacts/detector_best.pt"

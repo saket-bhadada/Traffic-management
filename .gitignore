@@ -32,9 +32,6 @@ traffic_signal_ml/data/
 runs/
 traffic_signal_ml/artifacts/*.pt
 traffic_signal_ml/artifacts/demo_videos/
-*.mp4
-*.avi
-*.pt
 *.onnx
 
 # Logs and OS files

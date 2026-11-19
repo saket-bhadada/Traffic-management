@@ -1,1 +1,1 @@
-"""Synchronized camera feed sources (VideoFileFeed and RTSPFeed stub)."""
+"""Synchronized camera feed sources for video files and live network streams."""

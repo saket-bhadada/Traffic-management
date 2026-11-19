@@ -122,6 +122,27 @@ Activate the Python 3.11 virtual environment and run:
 .\.venv\Scripts\pytest.exe traffic_signal_ml/tests -v
 ```
 
+### Live RTSP cameras
+
+The FastAPI backend can use four synchronized direct video streams. In
+`configs/feeds.yaml`, set `source: "rtsp"` and replace the `N`, `E`, `S`, and
+`W` entries under `rtsp_urls` with the corresponding camera stream URLs. Then
+restart the backend; the frontend will display the annotated frames as before.
+Supported URL schemes are `rtsp://`, `rtsps://`, `http://`, and `https://`,
+provided the OpenCV FFmpeg backend can decode that stream.
+
+A public CCTV website URL usually points to a web page, not the video stream.
+Use the direct stream/media URL (for example, an RTSP endpoint or a supported
+HTTP video stream). The backend cannot access streams that require browser
+cookies, page scripts, or a login flow. Keep private camera URLs and credentials
+out of source control.
+
+For recorded-video mode, place `approach_N.mp4`, `approach_E.mp4`,
+`approach_S.mp4`, and `approach_W.mp4` in `artifacts/demo_videos`. Synthetic
+demo videos are generated only when that directory is empty. If it contains
+other files but is missing an approach video, startup reports the missing file
+instead of replacing existing recordings.
+
 ---
 
 ## 5. Assumptions Made

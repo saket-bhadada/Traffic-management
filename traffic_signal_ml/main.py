@@ -30,7 +30,7 @@ from src.feeds.base import LANES
 from src.feeds.video_file_feed import (
     VideoFeedConfig,
     VideoFileFeed,
-    generate_synthetic_four_way_videos,
+    ensure_demo_videos,
 )
 from src.prediction.lstm_model import OnlineQueuePredictor
 from src.prediction.train_lstm import load_lstm_config, train_lstm_model
@@ -77,17 +77,12 @@ def run_video_mode(
         train_lstm_model(lstm_cfg)
 
     target_vdir = video_dir if video_dir is not None else (root_dir / "artifacts" / "demo_videos")
-    video_paths: Dict[str, Path] = {
-        lane: target_vdir / f"approach_{lane}.mp4" for lane in LANES
-    }
-    if not all(p.exists() for p in video_paths.values()):
-        logger.info("Generating 4 synchronized sample approach videos in %s...", target_vdir)
-        generate_synthetic_four_way_videos(
-            output_dir=target_vdir,
-            duration_seconds=max_ticks,
-            fps=5,
-            seed=det_cfg.seed,
-        )
+    video_paths = ensure_demo_videos(
+        output_dir=target_vdir,
+        duration_seconds=max_ticks,
+        fps=5,
+        seed=det_cfg.seed,
+    )
 
     detector = Detector(det_cfg)
     predictor = OnlineQueuePredictor(lstm_cfg)

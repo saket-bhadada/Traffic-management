@@ -154,3 +154,30 @@ def generate_synthetic_four_way_videos(
         w.release()
 
     return paths
+
+
+def ensure_demo_videos(
+    output_dir: Path,
+    duration_seconds: int = 30,
+    fps: int = 5,
+    seed: int = 42,
+) -> Dict[str, Path]:
+    """Return demo video paths, generating them only when the output directory is empty."""
+    paths = {lane: output_dir / f"approach_{lane}.mp4" for lane in LANES}
+    missing = [path for path in paths.values() if not path.exists()]
+    if not missing:
+        return paths
+
+    if output_dir.exists() and any(output_dir.iterdir()):
+        missing_names = ", ".join(path.name for path in missing)
+        raise FileNotFoundError(
+            f"Missing video file(s): {missing_names}. Refusing to generate synthetic "
+            f"videos in non-empty directory {output_dir} to protect existing files."
+        )
+
+    return generate_synthetic_four_way_videos(
+        output_dir=output_dir,
+        duration_seconds=duration_seconds,
+        fps=fps,
+        seed=seed,
+    )

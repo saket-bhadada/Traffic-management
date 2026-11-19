@@ -26,6 +26,8 @@ class YoloTrainConfig:
     epochs: int = 50
     imgsz: int = 640
     batch: int = 16
+    workers: int = 0  # data-loader processes; 0 = safest for memory on Windows
+    device: str = "0"  # "0" = first GPU, "cpu" = force CPU
     seed: int = 42
     data_yaml_path: Path = Path("data/splits/data.yaml")
     weights_output_path: Path = Path("artifacts/detector_best.pt")
@@ -37,6 +39,8 @@ class YoloTrainConfig:
         yaml_path: Path,
         model_override: Optional[str] = None,
         base_dir: Optional[Path] = None,
+        workers_override: Optional[int] = None,
+        device_override: Optional[str] = None,
     ) -> "YoloTrainConfig":
         """Load YoloTrainConfig from configs/datasets.yaml."""
         with open(yaml_path, "r", encoding="utf-8") as f:
@@ -48,12 +52,17 @@ class YoloTrainConfig:
         if variant not in ("yolov8n", "yolov8s"):
             raise ValueError(f"Unsupported model_variant '{variant}'. Expected 'yolov8n' or 'yolov8s'.")
 
+        workers = workers_override if workers_override is not None else int(det.get("workers", 0))
+        device = device_override if device_override is not None else str(det.get("device", "0"))
+
         splits_dir = root / str(raw.get("splits_dir", "data/splits"))
         return cls(
             model_variant=variant,
             epochs=int(det.get("epochs", 50)),
             imgsz=int(det.get("imgsz", 640)),
             batch=int(det.get("batch", 16)),
+            workers=workers,
+            device=device,
             seed=int(raw.get("seed", 42)),
             data_yaml_path=(splits_dir / "data.yaml").resolve(),
             weights_output_path=(root / str(det.get("weights_path", "artifacts/detector_best.pt"))).resolve(),
@@ -70,6 +79,25 @@ def seed_everything(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
+def resolve_device(device: str) -> str:
+    """Return the device to train on; refuse to silently fall back to CPU."""
+    if device.lower() == "cpu":
+        logger.warning("Training on CPU (device='cpu' was requested). This will be very slow.")
+        return "cpu"
+    if not torch.cuda.is_available():
+        raise SystemExit(
+            "GPU requested but PyTorch cannot see a CUDA GPU.\n"
+            f"  torch version: {torch.__version__}  (a '+cpu' suffix means the CPU-only build)\n"
+            "  Reinstall the CUDA build:\n"
+            "    pip uninstall -y torch torchvision torchaudio\n"
+            "    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128\n"
+            "  Or run with --device cpu to train on the CPU anyway."
+        )
+    index = int(device.split(",")[0])
+    logger.info("Training on GPU %s: %s (torch %s)", device, torch.cuda.get_device_name(index), torch.__version__)
+    return device
+
+
 def train_and_evaluate_yolo(config: YoloTrainConfig) -> Dict[str, Any]:
     """Train YOLOv8 (n or s) on unified splits and report per-class test Precision, Recall, and mAP50."""
     seed_everything(config.seed)
@@ -79,10 +107,15 @@ def train_and_evaluate_yolo(config: YoloTrainConfig) -> Dict[str, Any]:
             "Run download.py -> unify_labels.py -> build_splits.py first."
         )
 
+    device = resolve_device(config.device)
+
     from ultralytics import YOLO
 
     pretrained_name = f"{config.model_variant}.pt"
-    logger.info("Initializing %s for training (%d epochs)...", pretrained_name, config.epochs)
+    logger.info(
+        "Initializing %s for training (%d epochs, batch %d, workers %d)...",
+        pretrained_name, config.epochs, config.batch, config.workers,
+    )
     model = YOLO(pretrained_name)
 
     train_results = model.train(
@@ -90,6 +123,8 @@ def train_and_evaluate_yolo(config: YoloTrainConfig) -> Dict[str, Any]:
         epochs=config.epochs,
         imgsz=config.imgsz,
         batch=config.batch,
+        workers=config.workers,
+        device=device,
         seed=config.seed,
         deterministic=True,
         project=str(config.weights_output_path.parent / "yolo_runs"),
@@ -109,6 +144,8 @@ def train_and_evaluate_yolo(config: YoloTrainConfig) -> Dict[str, Any]:
         split="test",
         imgsz=config.imgsz,
         batch=config.batch,
+        workers=config.workers,
+        device=device,
     )
 
     class_names = {0: "standard_vehicle", 1: "emergency_vehicle"}
@@ -151,7 +188,16 @@ if __name__ == "__main__":
         choices=["yolov8n", "yolov8s"],
         help="Override model variant from configs/datasets.yaml",
     )
+    parser.add_argument("--workers", type=int, default=None,
+                        help="Data-loader processes (default 0). Raise to 2-4 only if you have plenty of RAM.")
+    parser.add_argument("--device", type=str, default=None,
+                        help="'0' for the first GPU (default) or 'cpu'.")
     args = parser.parse_args()
     cfg_path = Path(__file__).resolve().parents[2] / "configs" / "datasets.yaml"
-    train_cfg = YoloTrainConfig.from_yaml(cfg_path, model_override=args.model)
+    train_cfg = YoloTrainConfig.from_yaml(
+        cfg_path,
+        model_override=args.model,
+        workers_override=args.workers,
+        device_override=args.device,
+    )
     train_and_evaluate_yolo(train_cfg)

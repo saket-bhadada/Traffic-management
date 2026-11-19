@@ -1,0 +1,11 @@
+# Select "rtsp" to use four direct network video stream URLs.
+# CCTV website pages are not direct stream URLs; use the underlying stream URL.
+source: "video"
+target_fps: 1.0
+reconnect_timeout_sec: 5.0
+
+rtsp_urls:
+  N: ""
+  E: ""
+  S: ""
+  W: ""
