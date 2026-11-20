@@ -48,5 +48,5 @@ detector:
   batch: 8
   conf_threshold: 0.25
   iou_threshold: 0.45
-  weights_path: "artifacts/detector_best.pt"
+  weights_path: "artifacts/yolo_runs/train_yolov8n/weights/best.pt"
   metrics_output_path: "artifacts/detector_test_metrics.json"
