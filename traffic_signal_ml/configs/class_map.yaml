@@ -64,6 +64,8 @@ label_to_class:
   "My First Project - v1 2025-02-17 5-45am": 1
   ambulance: 1
   ambulances: 1
+  ambulance sirens on: 1
+  ambulance sirens off: 1
   emergency: 1
   emergency_vehicle: 1
   emergency-vehicle: 1

@@ -31,6 +31,9 @@ data/splits/
 traffic_signal_ml/data/
 runs/
 traffic_signal_ml/artifacts/*.pt
+!traffic_signal_ml/artifacts/detector_best.pt
+traffic_signal_ml/artifacts/yolo_runs/train_yolov8s/weights/
+yolov8s.pt
 *.onnx
 
 # Logs and OS files

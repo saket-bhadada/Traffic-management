@@ -15,38 +15,38 @@ datasets:
     version: 2
     format: "yolov8"
     license: "CC BY 4.0"
+    max_images: 1500
     url: "https://universe.roboflow.com/roboflow-100/vehicles-q0x2v"
-  - workspace: "vehicle-mscoco"
-    project: "vehicles-coco"
-    version: 1
-    format: "yolov8"
-    license: "CC BY 4.0"
-    url: "https://universe.roboflow.com/vehicle-mscoco/vehicles-coco"
   - workspace: "indian-road-dataset"
     project: "indian-roads-detection"
     version: 1
     format: "yolov8"
     license: "CC BY 4.0"
+    max_images: 2500
     url: "https://universe.roboflow.com/indian-road-dataset/indian-roads-detection"
-  - workspace: "ph-ambulance-dataset-with-augmentations"
-    project: "ph-ambulances"
+  - workspace: "aadi-ek5md"
+    project: "ambulance_detection-uzspj"
+    version: 3
+    format: "yolov8"
+    license: "CC BY 4.0"
+    max_images: 300
+    pseudo_label_standard: true
+    url: "https://universe.roboflow.com/aadi-ek5md/ambulance_detection-uzspj"
+  - workspace: "senior-project-design-2"
+    project: "emergency-vehicle-ambulances"
     version: 1
     format: "yolov8"
     license: "CC BY 4.0"
-    url: "https://universe.roboflow.com/ph-ambulance-dataset-with-augmentations/ph-ambulances"
-  - workspace: "himank-vpetc"
-    project: "ambulance-4bova"
-    version: 1
-    format: "yolov8"
-    license: "CC BY 4.0"
-    url: "https://universe.roboflow.com/himank-vpetc/ambulance-4bova"
+    pseudo_label_standard: true
+    url: "https://universe.roboflow.com/senior-project-design-2/emergency-vehicle-ambulances"
 
 detector:
-  model_variant: "yolov8n"  # Switch between "yolov8n" and "yolov8s"
-  epochs: 50
+  model_variant: "yolov8s"  # Switch between "yolov8n" and "yolov8s"
+  epochs: 30
   imgsz: 640
   batch: 8
+  workers: 0
   conf_threshold: 0.25
   iou_threshold: 0.45
-  weights_path: "artifacts/yolo_runs/train_yolov8n/weights/best.pt"
+  weights_path: "artifacts/detector_best.pt"
   metrics_output_path: "artifacts/detector_test_metrics.json"

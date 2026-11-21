@@ -83,6 +83,7 @@ class Detector:
                 source=frame,
                 conf=self.config.conf_threshold,
                 iou=self.config.iou_threshold,
+                agnostic_nms=True,
                 verbose=False,
             )
             if not results or results[0].boxes is None or len(results[0].boxes) == 0:
