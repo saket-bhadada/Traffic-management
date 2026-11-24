@@ -6,7 +6,7 @@ import IntersectionDiagram from './IntersectionDiagram';
 
 const CAMERA_PRESETS = {
   ISO: { pos: [34, 30, 34], target: [0, 0, 0] },
-  PLAN: { pos: [0, 56, 0.01], target: [0, 0, 0] },
+  TOP: { pos: [0, 56, 0.01], target: [0, 0, 0] },
   'N-S': { pos: [7, 15, 42], target: [0, 1, 0] },
   'E-W': { pos: [42, 15, 7], target: [0, 1, 0] },
 };
@@ -163,7 +163,7 @@ function buildAmbulanceMesh() {
 
 function buildIntersectionEnvironment(scene) {
   // Deep base ground & subtle architectural grid
-  const groundMat = new THREE.MeshStandardMaterial({ color: 0x0b0e13, roughness: 0.95, metalness: 0.05 });
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x0b0d10, roughness: 0.96, metalness: 0.04 });
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(180, 180), groundMat);
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.04;
@@ -391,13 +391,13 @@ export default function ThreeIntersectionScene({ snapshot }) {
   };
 
   useEffect(() => {
-    if (viewMode !== '3d' || webglFailed) return undefined;
+    if (webglFailed) return undefined;
     const container = containerRef.current;
     if (!container) return undefined;
 
     let renderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     } catch {
       queueMicrotask(() => setWebglFailed(true));
       return undefined;
@@ -415,8 +415,8 @@ export default function ThreeIntersectionScene({ snapshot }) {
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x090b0e);
-    scene.fog = new THREE.Fog(0x090b0e, 68, 150);
+    scene.background = new THREE.Color(0x0b0d10);
+    scene.fog = new THREE.Fog(0x0b0d10, 68, 150);
 
     const camera = new THREE.PerspectiveCamera(44, initW / initH, 0.5, 220);
     camera.position.set(...CAMERA_PRESETS.ISO.pos);
@@ -489,11 +489,13 @@ export default function ThreeIntersectionScene({ snapshot }) {
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const w = Math.max(entry.contentRect.width, 320);
-        const h = Math.max(entry.contentRect.height, 360);
+        const w = Math.round(entry.contentRect.width);
+        const h = Math.round(entry.contentRect.height);
+        if (w < 10 || h < 10) continue;
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
         renderer.setSize(w, h);
+        renderer.render(scene, camera);
       }
     });
     resizeObserver.observe(container);
@@ -712,162 +714,75 @@ export default function ThreeIntersectionScene({ snapshot }) {
       controls.dispose();
       disposeObject3D(scene);
       renderer.dispose();
+      renderer.forceContextLoss();
       if (renderer.domElement.parentNode === container) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [viewMode, webglFailed]);
+  }, [webglFailed]);
 
-  const {
-    timestamp,
-    state,
-    activeLane,
-    clockwiseLane,
-    resumeLane,
-    preemptTargetLane,
-    remainingTime,
-    lights,
-    isEmergencyPreemption,
-    queues,
-    emergencies,
-    carCountSwitch,
-  } = snapshot;
+  const show2d = viewMode === '2d' || webglFailed;
 
   return (
-    <div className="sim-card twin-panel">
-      <div className="sim-card-header">
-        <div>
-          <h3>4-Way Chowk Digital Twin</h3>
-          <p className="sim-card-sub">
-            {viewMode === '3d' && !webglFailed
-              ? 'Interactive Three.js WebGL scene · Drag to orbit, scroll to zoom'
-              : '2D orthographic schematic view · Left-hand Indian chowk geometry'}
-          </p>
+    <div className="scene-stage">
+      <div className="scene-overlay-bar">
+        <div className="scene-seg" role="group" aria-label="View mode">
+          <button
+            type="button"
+            className={`scene-seg-btn ${!show2d ? 'active' : ''}`}
+            disabled={webglFailed}
+            onClick={() => setViewMode('3d')}
+          >
+            3D
+          </button>
+          <button
+            type="button"
+            className={`scene-seg-btn ${show2d ? 'active' : ''}`}
+            onClick={() => setViewMode('2d')}
+          >
+            2D
+          </button>
         </div>
 
-        <div className="twin-toolbar">
-          <div className="twin-btn-group" role="group" aria-label="Viewport mode">
-            <button
-              type="button"
-              className={`twin-btn ${viewMode === '3d' && !webglFailed ? 'active' : ''}`}
-              disabled={webglFailed}
-              onClick={() => setViewMode('3d')}
-            >
-              3D TWIN
-            </button>
-            <button
-              type="button"
-              className={`twin-btn ${viewMode === '2d' || webglFailed ? 'active' : ''}`}
-              onClick={() => setViewMode('2d')}
-            >
-              2D PLAN
-            </button>
+        {!show2d && (
+          <div className="scene-seg" role="group" aria-label="Camera angle">
+            {Object.keys(CAMERA_PRESETS).map((presetKey) => (
+              <button
+                key={presetKey}
+                type="button"
+                className={`scene-seg-btn ${activePreset === presetKey ? 'active' : ''}`}
+                onClick={() => handlePreset(presetKey)}
+              >
+                {presetKey}
+              </button>
+            ))}
           </div>
-
-          {viewMode === '3d' && !webglFailed && (
-            <div className="twin-btn-group" role="group" aria-label="Camera presets">
-              {Object.keys(CAMERA_PRESETS).map((presetKey) => (
-                <button
-                  key={presetKey}
-                  type="button"
-                  className={`twin-btn ${activePreset === presetKey ? 'active' : ''}`}
-                  onClick={() => handlePreset(presetKey)}
-                >
-                  {presetKey}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <span className="sim-clock-pill">T+{timestamp}s</span>
-        </div>
+        )}
       </div>
 
-      {/* Compact Approach Status Strip */}
-      <div className="sim-phase-strip">
-        {LANES.map((lane) => {
-          const isCurrentI = lane === clockwiseLane;
-          const isActiveGreen = lights[lane] === LightColor.GREEN;
-          const isEmgTarget = lane === preemptTargetLane || emergencies[lane] > 0;
-          const isDemandTarget =
-            !isEmergencyPreemption &&
-            (carCountSwitch?.targetLane === lane || carCountSwitch?.nextDemandLane === lane);
-          const isResumeNext = lane === resumeLane && lane !== activeLane;
-
-          return (
-            <div
-              key={lane}
-              className={`sim-phase-chip ${isActiveGreen ? 'is-green' : ''} ${
-                isEmgTarget ? 'is-emg' : isDemandTarget ? 'is-demand' : ''
-              }`}
-            >
-              <span className="sim-phase-lane">
-                <span>LANE {lane}</span>
-                <small className="sim-phase-count">C={queues[lane] ?? 0}</small>
-              </span>
-              <span className="sim-phase-tags">
-                {isCurrentI && <span className="tag tag-i">PHASE i</span>}
-                {isEmgTarget && <span className="tag tag-j">EMG j</span>}
-                {isDemandTarget && <span className="tag tag-demand">HIGH COUNT</span>}
-                {isResumeNext && <span className="tag tag-next">NEXT i+1</span>}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {viewMode === '2d' || webglFailed ? (
-        <IntersectionDiagram snapshot={snapshot} embedded />
-      ) : (
-        <div className="twin-viewport" ref={containerRef}>
+      {!webglFailed && (
+        <div
+          className="twin-viewport"
+          ref={containerRef}
+          style={{ visibility: show2d ? 'hidden' : 'visible' }}
+        >
           <div className="twin-hud-layer" aria-hidden="true">
-            {LANES.map((lane) => {
-              const lightColor = lights[lane];
-              const isActive = lane === activeLane || state === SignalState.ALL_RED;
-              const qCount = queues[lane] ?? 0;
-              const eCount = emergencies[lane] ?? 0;
-              const remLabel =
-                state === SignalState.EMERGENCY_GREEN && lane === activeLane
-                  ? 'HOLD'
-                  : `${remainingTime.toFixed(0)}s`;
-
-              return (
-                <div
-                  key={lane}
-                  ref={(el) => {
-                    hudRefs.current[lane] = el;
-                  }}
-                  className={`twin-hud-chip aspect-${lightColor.toLowerCase()} ${
-                    eCount > 0 ? 'has-emg' : ''
-                  }`}
-                >
-                  <span className={`hud-dot dot-${lightColor.toLowerCase()}`} />
-                  <span className="hud-lane">{lane}</span>
-                  <span className="hud-sep">|</span>
-                  <span className="hud-q">C:{qCount}</span>
-                  {eCount > 0 && <span className="hud-emg">E:{eCount}</span>}
-                  {isActive && <span className="hud-rem">{remLabel}</span>}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="twin-corner-legend">
-            <span>
-              <i className="legend-swatch swatch-green" /> GREEN
-            </span>
-            <span>
-              <i className="legend-swatch swatch-amber" /> AMBER
-            </span>
-            <span>
-              <i className="legend-swatch swatch-red" /> RED
-            </span>
-            <span>
-              <i className="legend-swatch swatch-emg" /> EMERGENCY
-            </span>
+            {LANES.map((lane) => (
+              <span
+                key={lane}
+                ref={(el) => {
+                  hudRefs.current[lane] = el;
+                }}
+                className="compass-marker"
+              >
+                {lane}
+              </span>
+            ))}
           </div>
         </div>
       )}
+
+      {show2d && <IntersectionDiagram snapshot={snapshot} embedded />}
     </div>
   );
 }

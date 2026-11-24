@@ -4,6 +4,13 @@ A four-way intersection (`N`, `E`, `S`, `W`) signal controller combining YOLOv8 
 
 ![Traffic Signal Operations Console](frontend/public/ui-console.png)
 
+## Pre-trained Models & Demo Feeds (Included)
+
+Pre-trained model weights and synchronized 3-minute live demo feeds are committed directly to the repository so no dataset download or model training is required after cloning:
+- **YOLOv8s Vehicle & Emergency Detector**: `traffic_signal_ml/artifacts/detector_best.pt` (`mAP50 = 0.920`, emergency `mAP50 = 0.970`)
+- **2-Layer LSTM Queue Growth Predictor**: `traffic_signal_ml/artifacts/lstm_predictor.pt`
+- **4-Approach Demo Feeds (`640x480`)**: `traffic_signal_ml/artifacts/demo_videos/approach_{N,E,S,W}.mp4`
+
 ## Running Locally
 
 ### 1. Backend (FastAPI + YOLOv8 + LSTM + Controller)

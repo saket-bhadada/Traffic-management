@@ -24,11 +24,12 @@ all_red_duration: 1.0
 preempt_remaining_threshold: 4.0
 truncated_green_duration: 2.0
 
-# Car-count demand switching with safety buffers
+# Car-count priority switching with threshold & safety buffer
 car_count_switching_enabled: true
+car_count_priority_threshold: 10.0
 car_count_switch_margin: 5.0
 car_count_switch_buffer: 6.0
-max_lane_red_wait: 90.0
+max_lane_red_wait: 120.0
 
 # Fixed-time baseline controller settings (for comparison)
 fixed_green_duration: 30.0

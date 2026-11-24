@@ -228,9 +228,55 @@ def test_preemption_less_than_or_equal_4s_branch_expires_normally() -> None:
     assert sm.active_lane == "E"
 
 
-def test_car_count_buffered_switch_waits_for_min_green_and_buffer() -> None:
-    """Verify car-count switch enforces min_green + sustained buffer, resets on transient blips,
-    and switches via AMBER (3s) -> ALL_RED (1s) to the highest-count lane."""
+def test_below_threshold_system_moves_strictly_clockwise() -> None:
+    """Verify that until a waiting side reaches car_count_priority_threshold, no priority jump
+    occurs (neither mid-green nor at ALL_RED), even if active lane has 0 cars."""
+    cfg = StateMachineConfig(
+        base_green=12.0,
+        k1=0.0,
+        min_green=10.0,
+        max_green=60.0,
+        amber_duration=3.0,
+        all_red_duration=1.0,
+        car_count_switching_enabled=True,
+        car_count_priority_threshold=10.0,
+        car_count_switch_margin=5.0,
+        car_count_switch_buffer=6.0,
+    )
+    sm = PreemptionStateMachine(config=cfg)
+    zero_e = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
+    zero_dc = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
+    # S has 9 cars (< 10 threshold), N has 0 cars -> must still run full 12s green on N and advance N -> E -> S -> W
+    below_thresh = {"N": 0.0, "E": 2.0, "S": 9.0, "W": 4.0}
+
+    t = 0.0
+    visited = [sm.active_lane]
+    for expected_next in ["E", "S", "W", "N"]:
+        for step_i in range(12):
+            state = sm.step(t, below_thresh, zero_e, zero_dc)
+            t += 1.0
+            assert sm.demand_switch_target is None
+            assert sm.demand_buffer_elapsed == pytest.approx(0.0)
+            if step_i < 11:
+                assert state == SignalState.ADAPTIVE_GREEN
+        assert sm.state == SignalState.AMBER
+        for _ in range(3):
+            sm.step(t, below_thresh, zero_e, zero_dc)
+            t += 1.0
+        assert sm.state == SignalState.ALL_RED
+        sm.step(t, below_thresh, zero_e, zero_dc)
+        t += 1.0
+        assert sm.state == SignalState.ADAPTIVE_GREEN
+        assert sm.active_lane == expected_next
+        visited.append(sm.active_lane)
+
+    assert visited == ["N", "E", "S", "W", "N"]
+
+
+def test_car_count_threshold_triggers_priority_after_min_green_and_buffer() -> None:
+    """Verify car-count priority triggers once a waiting lane reaches car_count_priority_threshold,
+    enforces min_green + sustained buffer, resets if count drops below threshold, and resumes normal
+    clockwise cycling once counts fall below threshold."""
     cfg = StateMachineConfig(
         base_green=15.0,
         k1=1.5,
@@ -239,6 +285,7 @@ def test_car_count_buffered_switch_waits_for_min_green_and_buffer() -> None:
         amber_duration=3.0,
         all_red_duration=1.0,
         car_count_switching_enabled=True,
+        car_count_priority_threshold=10.0,
         car_count_switch_margin=5.0,
         car_count_switch_buffer=6.0,
     )
@@ -246,32 +293,29 @@ def test_car_count_buffered_switch_waits_for_min_green_and_buffer() -> None:
     zero_e = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
     zero_dc = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
 
-    # Transient spike on S for 3 seconds (below 6s buffer) -> must NOT switch and must reset buffer
-    heavy_s = {"N": 6.0, "E": 1.0, "S": 14.0, "W": 1.0}
-    balanced = {"N": 6.0, "E": 1.0, "S": 6.0, "W": 1.0}
+    # Transient spike on S (>= 10 threshold) for 3s -> buffer builds, then resets when S drops to 8 (< 10)
+    heavy_s = {"N": 6.0, "E": 1.0, "S": 12.0, "W": 1.0}
+    below_s = {"N": 6.0, "E": 1.0, "S": 8.0, "W": 1.0}
     for t in range(3):
         state = sm.step(float(t), heavy_s, zero_e, zero_dc)
         assert state == SignalState.ADAPTIVE_GREEN
         assert sm.demand_buffer_elapsed == pytest.approx(float(t + 1))
 
-    # Drop counts back within margin at t=3 -> buffer must reset to 0
-    sm.step(3.0, balanced, zero_e, zero_dc)
+    sm.step(3.0, below_s, zero_e, zero_dc)
     assert sm.demand_buffer_elapsed == pytest.approx(0.0)
     assert sm.demand_switch_target is None
 
-    # Advance up to t=7 (elapsed=8) with balanced counts, then hold heavy_s across t=8..13
+    # Advance up to t=7 with below-threshold counts, then hold heavy_s (S=12 >= 10) across t=8..13
     for t in range(4, 8):
-        sm.step(float(t), balanced, zero_e, zero_dc)
+        sm.step(float(t), below_s, zero_e, zero_dc)
     assert sm.state == SignalState.ADAPTIVE_GREEN
 
-    # t=8,9: crosses min_green=10 at t=9, but buffer only at 2s -> still GREEN
     sm.step(8.0, heavy_s, zero_e, zero_dc)
     sm.step(9.0, heavy_s, zero_e, zero_dc)
     assert sm.state == SignalState.ADAPTIVE_GREEN
     assert sm.elapsed_in_state == pytest.approx(10.0)
     assert sm.demand_buffer_elapsed == pytest.approx(2.0)
 
-    # t=10,11,12: buffer at 3,4,5s -> still GREEN
     for t in (10, 11, 12):
         state = sm.step(float(t), heavy_s, zero_e, zero_dc)
         assert state == SignalState.ADAPTIVE_GREEN
@@ -282,7 +326,7 @@ def test_car_count_buffered_switch_waits_for_min_green_and_buffer() -> None:
     assert sm.active_lane == "N"
     assert sm.remaining_time == pytest.approx(3.0)
 
-    # 3s AMBER + 1s ALL_RED -> switches directly to S (skipping E)
+    # 3s AMBER + 1s ALL_RED -> switches directly to priority lane S (skipping E)
     for t in (14.0, 15.0, 16.0):
         sm.step(t, heavy_s, zero_e, zero_dc)
     assert sm.state == SignalState.ALL_RED
@@ -291,42 +335,8 @@ def test_car_count_buffered_switch_waits_for_min_green_and_buffer() -> None:
     assert sm.active_lane == "S"
 
 
-def test_car_count_empty_lane_switches_early_after_buffer() -> None:
-    """Verify an empty green lane (C_i == 0) with waiting cars on S switches early after min_green + buffer."""
-    cfg = StateMachineConfig(
-        base_green=25.0,
-        min_green=10.0,
-        max_green=60.0,
-        amber_duration=3.0,
-        all_red_duration=1.0,
-        car_count_switching_enabled=True,
-        car_count_switch_margin=5.0,
-        car_count_switch_buffer=6.0,
-    )
-    sm = PreemptionStateMachine(config=cfg)
-    zero_e = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
-    zero_dc = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
-    counts = {"N": 0.0, "E": 1.0, "S": 3.0, "W": 0.0}
-
-    # During first 9 ticks (t=0..8), must remain GREEN due to min_green=10s
-    for t in range(9):
-        state = sm.step(float(t), counts, zero_e, zero_dc)
-        assert state == SignalState.ADAPTIVE_GREEN
-
-    # At t=9 (10th tick), elapsed=10s >= min_green and buffer=10s >= 6s -> enters AMBER
-    state = sm.step(9.0, counts, zero_e, zero_dc)
-    assert state == SignalState.AMBER
-
-    for t in (10.0, 11.0, 12.0):
-        sm.step(t, counts, zero_e, zero_dc)
-    assert sm.state == SignalState.ALL_RED
-    sm.step(13.0, counts, zero_e, zero_dc)
-    assert sm.state == SignalState.ADAPTIVE_GREEN
-    assert sm.active_lane == "S"
-
-
-def test_car_count_starvation_guard_prioritizes_long_waiting_lane() -> None:
-    """Verify a waiting lane reaching max_lane_red_wait is prioritized ahead of a slightly busier lane."""
+def test_car_count_starvation_guard_prioritizes_long_waiting_threshold_lane() -> None:
+    """Verify among waiting lanes at or above threshold, max_lane_red_wait prioritizes the starved lane."""
     cfg = StateMachineConfig(
         base_green=15.0,
         min_green=10.0,
@@ -334,6 +344,7 @@ def test_car_count_starvation_guard_prioritizes_long_waiting_lane() -> None:
         amber_duration=3.0,
         all_red_duration=1.0,
         car_count_switching_enabled=True,
+        car_count_priority_threshold=10.0,
         car_count_switch_margin=5.0,
         car_count_switch_buffer=6.0,
         max_lane_red_wait=20.0,
@@ -342,9 +353,8 @@ def test_car_count_starvation_guard_prioritizes_long_waiting_lane() -> None:
     sm.lane_red_wait["W"] = 19.0
     zero_e = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
     zero_dc = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
-    # S has more cars (8 vs W's 2), while N has 6 cars (so neither beats margin +5 on raw count),
-    # yet W hits max_lane_red_wait (20s) on the first tick!
-    counts = {"N": 6.0, "E": 1.0, "S": 8.0, "W": 2.0}
+    # Both S (14) and W (10) meet threshold 10, while W hits max_lane_red_wait (20s) on tick 0
+    counts = {"N": 6.0, "E": 1.0, "S": 14.0, "W": 10.0}
 
     for t in range(10):
         state = sm.step(float(t), counts, zero_e, zero_dc)

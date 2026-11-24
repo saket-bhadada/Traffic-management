@@ -1,49 +1,37 @@
 :root {
-  /* Neutral base & single accent */
+  /* Dark slate theme (preserved) */
   --bg-canvas: #0b0d10;
   --bg-panel: #111419;
   --bg-elevated: #171b22;
   --bg-hover: #1e232d;
-  --border-subtle: #222730;
-  --border-strong: #2e3542;
-  --text-primary: #e6eaf0;
-  --text-secondary: #949eae;
-  --text-muted: #636d7e;
+  --border-subtle: #1a1f27;
+  --border-strong: #272e3a;
+  --text-primary: #e8ecf2;
+  --text-secondary: #8b95a5;
+  --text-muted: #555f6f;
   --accent: #38bdf8;
 
-  /* Signal states (used strictly for real signal state) */
+  /* Real traffic signal colors */
   --sig-green: #16a34a;
   --sig-amber: #d97706;
   --sig-red: #dc2626;
 
-  /* Typography & fixed scale (12 / 14 / 16 / 24px) */
-  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+  /* Single cohesive grotesque typeface with tabular numerals */
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
   --fs-12: 0.75rem;
+  --fs-13: 0.8125rem;
   --fs-14: 0.875rem;
   --fs-16: 1rem;
-  --fs-24: 1.5rem;
+  --fs-30: 1.875rem;
 
-  /* Radii (2-6px) & spacing scale */
   --r-2: 2px;
   --r-4: 4px;
-  --r-6: 6px;
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
   --sp-4: 16px;
   --sp-5: 20px;
-  --sp-6: 24px;
-
-  /* Compatibility mappings removed once components migrate */
-  --bg-primary: var(--bg-canvas);
-  --bg-card: var(--bg-panel);
-  --text-main: var(--text-primary);
-  --border-color: var(--border-subtle);
-  --color-green: var(--sig-green);
-  --color-amber: var(--sig-amber);
-  --color-red: var(--sig-red);
-  --color-blue: var(--accent);
 }
 
 *,
@@ -52,24 +40,25 @@
   box-sizing: border-box;
 }
 
-body {
+html,
+body,
+#root {
   margin: 0;
-  font-family: var(--font-sans);
-  font-size: var(--fs-14);
-  line-height: 1.45;
+  width: 100%;
+  height: 100%;
   background-color: var(--bg-canvas);
   color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-14);
+  line-height: 1.4;
   -webkit-font-smoothing: antialiased;
 }
 
-code,
-pre,
-.mono {
-  font-family: var(--font-mono);
+.num {
   font-variant-numeric: tabular-nums;
 }
 
-#root {
-  width: 100%;
-  min-height: 100vh;
+button,
+select {
+  font-family: inherit;
 }

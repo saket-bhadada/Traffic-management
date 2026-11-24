@@ -52,9 +52,10 @@ class StateMachineConfig:
     preempt_remaining_threshold: float = 4.0
     truncated_green_duration: float = 2.0
     car_count_switching_enabled: bool = True
+    car_count_priority_threshold: float = 10.0
     car_count_switch_margin: float = 5.0
     car_count_switch_buffer: float = 6.0
-    max_lane_red_wait: float = 90.0
+    max_lane_red_wait: float = 120.0
 
 
 def compute_adaptive_green(
@@ -147,14 +148,15 @@ class PreemptionStateMachine:
         standard_counts: Dict[str, float],
         exclude_lane: Optional[str] = None,
     ) -> Optional[str]:
-        """Select highest-demand waiting lane (with starvation guard and clockwise tie-break)."""
+        """Select highest-demand waiting lane that has reached car_count_priority_threshold."""
         n = len(self.config.phase_order)
         start_idx = (self.clockwise_index + 1) % n
         ordered_lanes = [self.config.phase_order[(start_idx + offset) % n] for offset in range(n)]
+        threshold = float(self.config.car_count_priority_threshold)
         candidates = [
             lane
             for lane in ordered_lanes
-            if lane != exclude_lane and float(standard_counts.get(lane, 0.0)) > 0.0
+            if lane != exclude_lane and float(standard_counts.get(lane, 0.0)) >= threshold
         ]
         if not candidates:
             return None
@@ -231,8 +233,9 @@ class PreemptionStateMachine:
 
         c_best = float(standard_counts.get(best_waiting, 0.0))
         best_wait = self.lane_red_wait.get(best_waiting, 0.0)
+        threshold = float(self.config.car_count_priority_threshold)
         condition_holds = (
-            c_active <= 0.0
+            c_active < threshold
             or c_best >= c_active + self.config.car_count_switch_margin
             or best_wait >= self.config.max_lane_red_wait
         )
@@ -433,7 +436,8 @@ class PreemptionStateMachine:
                         chosen: Optional[str] = None
                         if (
                             self.next_demand_lane is not None
-                            and float(standard_counts.get(self.next_demand_lane, 0.0)) > 0.0
+                            and float(standard_counts.get(self.next_demand_lane, 0.0))
+                            >= self.config.car_count_priority_threshold
                         ):
                             chosen = self.next_demand_lane
                         else:

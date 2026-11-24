@@ -52,9 +52,10 @@ export const DEFAULT_CONFIG = Object.freeze({
   saturationDischargeRate: 1.5,
   emergencyClearTicks: 3,
   carCountSwitchingEnabled: true,
+  carCountPriorityThreshold: 10.0,
   carCountSwitchMargin: 5.0,
   carCountSwitchBuffer: 6.0,
-  maxLaneRedWait: 90.0,
+  maxLaneRedWait: 120.0,
 });
 
 const DEMAND_RATES = Object.freeze({
@@ -155,10 +156,11 @@ export class PreemptionStateMachine {
   _selectHighestCountLane(standardCounts, excludeLane = null) {
     const n = this.config.phaseOrder.length;
     const startIdx = (this.clockwiseIndex + 1) % n;
+    const threshold = Number(this.config.carCountPriorityThreshold);
     const candidates = [];
     for (let offset = 0; offset < n; offset += 1) {
       const lane = this.config.phaseOrder[(startIdx + offset) % n];
-      if (lane !== excludeLane && Number(standardCounts[lane] ?? 0) > 0) {
+      if (lane !== excludeLane && Number(standardCounts[lane] ?? 0) >= threshold) {
         candidates.push(lane);
       }
     }
@@ -199,8 +201,9 @@ export class PreemptionStateMachine {
 
     const cBest = Number(standardCounts[bestWaiting] ?? 0);
     const bestWait = this.laneRedWait[bestWaiting] ?? 0.0;
+    const threshold = Number(this.config.carCountPriorityThreshold);
     const conditionHolds =
-      cActive <= 0.0 ||
+      cActive < threshold ||
       cBest >= cActive + this.config.carCountSwitchMargin ||
       bestWait >= this.config.maxLaneRedWait;
 
@@ -423,7 +426,7 @@ export class PreemptionStateMachine {
             let chosen = null;
             if (
               this.nextDemandLane !== null &&
-              Number(standardCounts[this.nextDemandLane] ?? 0) > 0
+              Number(standardCounts[this.nextDemandLane] ?? 0) >= this.config.carCountPriorityThreshold
             ) {
               chosen = this.nextDemandLane;
             } else {
@@ -686,10 +689,13 @@ export class IntersectionSimulator {
     }
   }
 
-  setCarCountConfig({ enabled, buffer, margin } = {}) {
+  setCarCountConfig({ enabled, threshold, buffer, margin } = {}) {
     const nextConfig = { ...this.config };
     if (typeof enabled === 'boolean') {
       nextConfig.carCountSwitchingEnabled = enabled;
+    }
+    if (threshold !== undefined) {
+      nextConfig.carCountPriorityThreshold = Math.max(1.0, Number(threshold));
     }
     if (buffer !== undefined) {
       nextConfig.carCountSwitchBuffer = Math.max(0.0, Number(buffer));
@@ -701,6 +707,11 @@ export class IntersectionSimulator {
     this.sm.config = nextConfig;
     if (!nextConfig.carCountSwitchingEnabled) {
       this.sm._clearDemandSwitch(true);
+    } else if (this.sm.demandSwitchTarget !== null) {
+      const targetLen = this.adaptiveSide.queues[this.sm.demandSwitchTarget]?.length ?? 0;
+      if (targetLen < nextConfig.carCountPriorityThreshold) {
+        this.sm._clearDemandSwitch(true);
+      }
     }
   }
 
@@ -799,14 +810,14 @@ export class IntersectionSimulator {
 
     if (scenarioId === 'car_count_switch') {
       this.reset('manual');
-      this.setCarCountConfig({ enabled: true, buffer: 6.0, margin: 5.0 });
-      this.injectVehicles('N', 10);
-      this.injectVehicles('E', 1);
-      this.injectVehicles('S', 20);
-      this.injectVehicles('W', 1);
-      this.prevCounts = { N: 10, E: 1, S: 20, W: 1 };
+      this.setCarCountConfig({ enabled: true, threshold: 10.0, buffer: 6.0, margin: 5.0 });
+      this.injectVehicles('N', 8);
+      this.injectVehicles('E', 2);
+      this.injectVehicles('S', 14);
+      this.injectVehicles('W', 2);
+      this.prevCounts = { N: 8, E: 2, S: 14, W: 2 };
       this.sm.elapsedInState = this.config.minGreen;
-      const { raw, clamped } = computeAdaptiveGreen(10, 0, this.config);
+      const { raw, clamped } = computeAdaptiveGreen(8, 0, this.config);
       this.sm.lastRawGreen = raw;
       this.sm.lastTargetGreen = clamped;
       this.sm.remainingTime = Math.max(0.0, clamped - this.sm.elapsedInState);
@@ -916,10 +927,15 @@ export class IntersectionSimulator {
       this.sm.resumeClockwiseIndex !== null
         ? this.sm.resumeClockwiseIndex
         : (this.sm.clockwiseIndex + 1) % this.config.phaseOrder.length;
+    const pendingPriorityLane = this.config.carCountSwitchingEnabled
+      ? this.sm.nextDemandLane ??
+        this.sm.demandSwitchTarget ??
+        this.sm._selectHighestCountLane(queues, this.sm.activeLane)
+      : null;
     const resumeLane =
       this.sm.resumeClockwiseIndex !== null
         ? this.config.phaseOrder[resumeIdx]
-        : this.sm.nextDemandLane ?? this.config.phaseOrder[resumeIdx];
+        : pendingPriorityLane ?? this.config.phaseOrder[resumeIdx];
 
     const bufferDuration = Number(this.config.carCountSwitchBuffer);
     const bufferElapsed = Number(this.sm.demandBufferElapsed.toFixed(1));
@@ -984,6 +1000,7 @@ export class IntersectionSimulator {
       config: this.config,
       carCountSwitch: {
         enabled: Boolean(this.config.carCountSwitchingEnabled),
+        threshold: Number(this.config.carCountPriorityThreshold),
         targetLane: this.sm.demandSwitchTarget,
         nextDemandLane: this.sm.nextDemandLane,
         activeDemandSwitch: this.sm.activeDemandSwitch,

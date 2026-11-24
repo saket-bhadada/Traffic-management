@@ -2,10 +2,10 @@ import React from 'react';
 import { LANES, LightColor, SignalState } from '../simulation/stateMachine';
 
 const CORNER_SIGNAL_POS = {
-  N: { x: 432, y: 84, badgeX: 432, badgeY: 50, label: 'NORTH (N)' },
-  E: { x: 432, y: 466, badgeX: 432, badgeY: 444, label: 'EAST (E)' },
-  S: { x: 146, y: 466, badgeX: 146, badgeY: 444, label: 'SOUTH (S)' },
-  W: { x: 146, y: 84, badgeX: 146, badgeY: 50, label: 'WEST (W)' },
+  N: { x: 432, y: 84, badgeX: 432, badgeY: 50, label: 'North' },
+  E: { x: 432, y: 466, badgeX: 432, badgeY: 444, label: 'East' },
+  S: { x: 146, y: 466, badgeX: 146, badgeY: 444, label: 'South' },
+  W: { x: 146, y: 84, badgeX: 146, badgeY: 50, label: 'West' },
 };
 
 const MAX_VISIBLE_SLOTS = 10;
@@ -439,18 +439,5 @@ export default function IntersectionDiagram({ snapshot, embedded = false, offlin
     return svgBlock;
   }
 
-  return (
-    <div className="sim-card sim-intersection-card">
-      <div className="sim-card-header">
-        <div>
-          <h3>4-Way Chowk Schematic</h3>
-          <p className="sim-card-sub">
-            Clockwise Cycle: N &rarr; E &rarr; S &rarr; W | Left-hand Indian intersection geometry
-          </p>
-        </div>
-        <span className="sim-clock-pill">T+{timestamp}s</span>
-      </div>
-      {svgBlock}
-    </div>
-  );
+  return <div className="schematic-standalone">{svgBlock}</div>;
 }

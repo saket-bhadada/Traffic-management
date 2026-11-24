@@ -46,9 +46,10 @@ def load_controller_configs(
         preempt_remaining_threshold=float(raw.get("preempt_remaining_threshold", 4.0)),
         truncated_green_duration=float(raw.get("truncated_green_duration", 2.0)),
         car_count_switching_enabled=bool(raw.get("car_count_switching_enabled", True)),
+        car_count_priority_threshold=float(raw.get("car_count_priority_threshold", 10.0)),
         car_count_switch_margin=float(raw.get("car_count_switch_margin", 5.0)),
         car_count_switch_buffer=float(raw.get("car_count_switch_buffer", 6.0)),
-        max_lane_red_wait=float(raw.get("max_lane_red_wait", 90.0)),
+        max_lane_red_wait=float(raw.get("max_lane_red_wait", 120.0)),
     )
 
     fixed_cfg = FixedTimerConfig(
