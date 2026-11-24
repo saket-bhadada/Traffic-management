@@ -14,6 +14,7 @@ import {
   Zap,
 } from 'lucide-react';
 import PreemptionFlowchart from '../components/PreemptionFlowchart';
+import QueueGrowthChart from '../components/QueueGrowthChart';
 import ThreeIntersectionScene from '../components/ThreeIntersectionScene';
 import {
   IntersectionSimulator,
@@ -160,17 +161,31 @@ export default function SimulationPage() {
       ? Math.min(100, Math.round((carCountSwitch.bufferElapsed / carCountSwitch.bufferDuration) * 100))
       : 100;
   const minGreenElapsed = Math.min(config.minGreen, elapsedInState);
+  const activeAspect = (snapshot.lights[activeLane] ?? LightColor.RED).toLowerCase();
+  const hasVehicleData =
+    snapshot.timestamp > 0 ||
+    metrics.adaptive.totalQueued > 0 ||
+    metrics.adaptive.throughput > 0;
+  const hasQueueGrowthData =
+    snapshot.timestamp > 0 || Object.values(dcDtMap).some((v) => Number(v) !== 0);
+
+  let bannerClass = 'alert-normal';
+  if (isEmergencyPreemption) {
+    bannerClass = 'alert-emergency';
+  } else if (isDemandBuffering || isDemandClearing || state === SignalState.AMBER) {
+    bannerClass = 'alert-amber';
+  }
 
   return (
     <div className="sim-page">
       {/* Header & Transport Controls */}
       <div className="sim-toolbar">
         <div className="sim-title-block">
-          <span className="sim-op-code">SIM · 1Hz</span>
+          <span className="sim-op-code">SIM 1Hz</span>
           <div>
-            <h2>Intersection Signal Simulation</h2>
+            <h2>Signal Simulation</h2>
             <p className="subtitle">
-              Discrete-Time State Machine &middot; Adaptive Timer vs. 30s Fixed Baseline
+              1s discrete-time state machine &middot; Adaptive timer vs. 30s fixed baseline
             </p>
           </div>
         </div>
@@ -181,7 +196,7 @@ export default function SimulationPage() {
             className={`btn ${isPlaying ? 'btn-active-play' : 'btn-primary-sim'}`}
             onClick={() => setIsPlaying((prev) => !prev)}
           >
-            {isPlaying ? <Pause size={15} /> : <Play size={15} />}
+            {isPlaying ? <Pause size={16} strokeWidth={1.75} /> : <Play size={16} strokeWidth={1.75} />}
             {isPlaying ? 'Pause' : 'Play'}
           </button>
 
@@ -192,15 +207,15 @@ export default function SimulationPage() {
             disabled={isPlaying}
             title={isPlaying ? 'Pause simulation to step 1s manually' : 'Advance simulation by 1 second'}
           >
-            <StepForward size={15} /> Step (+1s)
+            <StepForward size={16} strokeWidth={1.75} /> Step (+1s)
           </button>
 
           <button type="button" className="btn btn-danger" onClick={handleReset}>
-            <RotateCcw size={15} /> Reset
+            <RotateCcw size={16} strokeWidth={1.75} /> Reset
           </button>
 
           <div className="sim-speed-pills" role="group" aria-label="Simulation speed">
-            <FastForward size={14} className="speed-icon" />
+            <FastForward size={14} strokeWidth={1.75} className="speed-icon" />
             {SPEED_OPTIONS.map((opt) => (
               <button
                 key={opt}
@@ -227,65 +242,65 @@ export default function SimulationPage() {
       </div>
 
       {/* Live Status Banner */}
-      <div
-        className={`alert-banner ${
-          isEmergencyPreemption
-            ? 'alert-emergency'
-            : isDemandBuffering || isDemandClearing
-              ? 'alert-demand'
-              : 'alert-normal'
-        }`}
-      >
+      <div className={`alert-banner ${bannerClass}`}>
         {isEmergencyPreemption ? (
           <>
-            <ShieldAlert size={26} className="banner-icon" />
+            <ShieldAlert size={20} strokeWidth={1.75} className="banner-icon" />
             <div className="sim-banner-text">
-              <strong>EMERGENCY PREEMPTION ACTIVE!</strong>
+              <strong>
+                Preempt active: {LANE_NAMES[activeLane]} ({activeLane})
+              </strong>
               <span>
                 {' '}
-                State: <b>{state}</b> | Active Approach: <b>{activeLane}</b> | Remaining:{' '}
-                <b>{timerLabel}</b>
-                {preemptTargetLane ? ` | Emergency Target j: ${preemptTargetLane}` : ''}
-                {postEmergencyClearing ? ` | Post-Clearance -> Resume (i+1): ${resumeLane}` : ` | Resume (i+1): ${resumeLane}`}
+                &middot; State: <b>{state}</b> &middot; <b>{timerLabel}</b>
+                {preemptTargetLane ? ` · Target j: ${preemptTargetLane}` : ''}
+                {postEmergencyClearing
+                  ? ` · Clearing to Resume: ${resumeLane}`
+                  : ` · Resume: ${resumeLane}`}
               </span>
             </div>
           </>
         ) : isDemandBuffering ? (
           <>
-            <AlertTriangle size={24} className="banner-icon" />
+            <AlertTriangle size={20} strokeWidth={1.75} className="banner-icon" />
             <div className="sim-banner-text">
               <strong>
-                CAR-COUNT SWITCH BUFFERING &rarr; Lane {carCountSwitch.targetLane} (
-                {queues[carCountSwitch.targetLane] ?? 0} cars vs {queues[activeLane] ?? 0})
+                Demand switch queued: {LANE_NAMES[carCountSwitch.targetLane]} (
+                {carCountSwitch.targetLane})
               </strong>
               <span>
                 {' '}
-                | Buffer: <b>{carCountSwitch.bufferRemaining.toFixed(1)}s</b> | Min Green Hold:{' '}
-                <b>{carCountSwitch.minGreenRemaining.toFixed(1)}s</b> | State: <b>{state}</b>
+                &middot; C_{carCountSwitch.targetLane}={queues[carCountSwitch.targetLane] ?? 0} vs C_
+                {activeLane}={queues[activeLane] ?? 0} &middot; Buffer:{' '}
+                <b>{carCountSwitch.bufferRemaining.toFixed(1)}s</b> remaining &middot; Min green hold:{' '}
+                <b>{carCountSwitch.minGreenRemaining.toFixed(1)}s</b>
               </span>
             </div>
           </>
         ) : isDemandClearing ? (
           <>
-            <Car size={24} className="banner-icon" />
+            <Car size={20} strokeWidth={1.75} className="banner-icon" />
             <div className="sim-banner-text">
-              <strong>Car-Count Demand Switch &rarr; Lane {resumeLane}</strong>
+              <strong>
+                Demand switch active: {activeLane} &rarr; {resumeLane}
+              </strong>
               <span>
                 {' '}
-                State: <b>{state}</b> | Clearing Lane: <b>{activeLane}</b> | Remaining:{' '}
-                <b>{timerLabel}</b>
+                &middot; State: <b>{state}</b> &middot; <b>{timerLabel}</b>
               </span>
             </div>
           </>
         ) : (
           <>
-            <Car size={24} className="banner-icon" />
+            <Car size={20} strokeWidth={1.75} className="banner-icon" />
             <div className="sim-banner-text">
-              <strong>Normal Clockwise Adaptive Cycle</strong>
+              <strong>
+                {LANE_NAMES[activeLane]} ({activeLane}) {activeAspect}
+              </strong>
               <span>
                 {' '}
-                State: <b>{state}</b> | Active Lane: <b>{activeLane}</b> | Remaining:{' '}
-                <b>{timerLabel}</b> | Next Phase (i+1): <b>{resumeLane}</b>
+                &mdash; <b>{timerLabel}</b> &middot; State: <b>{state}</b> &middot; Next:{' '}
+                <b>{resumeLane}</b>
               </span>
             </div>
           </>
@@ -295,7 +310,7 @@ export default function SimulationPage() {
       {/* Guided Scenario Presets */}
       <div className="sim-scenarios-bar">
         <div className="sim-scenarios-heading">
-          <Zap size={14} />
+          <Zap size={14} strokeWidth={1.75} />
           <span>Guided Scenarios</span>
         </div>
         <div className="sim-scenarios-grid">
@@ -363,14 +378,14 @@ export default function SimulationPage() {
                         className="btn btn-sm"
                         onClick={() => handleInjectCars(lane, 5)}
                       >
-                        <Plus size={13} /> 5 Cars
+                        <Plus size={14} strokeWidth={1.75} /> 5 Cars
                       </button>
                       <button
                         type="button"
                         className="btn btn-sm btn-emg"
                         onClick={() => handleInjectEmergency(lane)}
                       >
-                        <Siren size={13} /> Emergency
+                        <Siren size={14} strokeWidth={1.75} /> Emergency
                       </button>
                       {eLen > 0 && (
                         <button
@@ -396,7 +411,7 @@ export default function SimulationPage() {
           <div className="sim-card sim-formula-card">
             <div className="sim-card-header">
               <div>
-                <h3><Clock size={17} /> Adaptive Green Timer Formula</h3>
+                <h3><Clock size={16} strokeWidth={1.75} /> Adaptive Green Timer Formula</h3>
                 <p className="sim-card-sub">
                   Recomputed every 1s tick during <code>ADAPTIVE_GREEN</code> on active clockwise lane {clockwiseLane}
                 </p>
@@ -542,18 +557,24 @@ export default function SimulationPage() {
         </div>
       </div>
 
-      {/* Bottom 2-Column Analytics: Side-by-Side Comparison + Transition Log */}
+      {/* Bottom Strip: Queue Growth Chart + Comparison Table + Phase Timeline Log */}
+      <QueueGrowthChart
+        dcDt={dcDtMap}
+        hasData={hasQueueGrowthData}
+        title="Per-lane queue growth (dC/dt)"
+      />
+
       <div className="sim-bottom-grid">
         <div className="sim-card">
           <div className="sim-card-header">
             <div>
-              <h3>Live Benchmark: Adaptive + Preemption vs. Fixed-Timer (30s)</h3>
+              <h3>Comparison vs. Fixed-Time (30s)</h3>
               <p className="sim-card-sub">
-                Both controllers receive the exact same arrival stream &amp; 1.5 veh/s discharge rate
+                Identical arrival stream &amp; 1.5 veh/s discharge rate
               </p>
             </div>
             <span className="fixed-status-pill">
-              Fixed Baseline:{' '}
+              Fixed:{' '}
               <b className={`txt-${(metrics.fixed.fixedLights[metrics.fixed.fixedActiveLane] ?? LightColor.RED).toLowerCase()}`}>
                 {metrics.fixed.fixedActiveLane} ({metrics.fixed.fixedRemainingTime.toFixed(0)}s)
               </b>
@@ -565,48 +586,83 @@ export default function SimulationPage() {
               <thead>
                 <tr>
                   <th>Metric</th>
-                  <th>Fixed-Timer (30s)</th>
-                  <th>Adaptive + Preemption</th>
+                  <th>Fixed (30s)</th>
+                  <th>Adaptive</th>
                   <th>Delta</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Avg Vehicle Wait Time (s)</td>
-                  <td>{metrics.fixed.avgWaitSec.toFixed(2)}s</td>
-                  <td className="val-bold">{metrics.adaptive.avgWaitSec.toFixed(2)}s</td>
-                  <td className={metrics.adaptive.avgWaitSec <= metrics.fixed.avgWaitSec ? 'delta-good' : 'delta-warn'}>
-                    {(metrics.adaptive.avgWaitSec - metrics.fixed.avgWaitSec).toFixed(2)}s
+                  <td>Avg wait time</td>
+                  <td>{hasVehicleData ? `${metrics.fixed.avgWaitSec.toFixed(2)}s` : '--'}</td>
+                  <td className="val-bold">
+                    {hasVehicleData ? `${metrics.adaptive.avgWaitSec.toFixed(2)}s` : '--'}
+                  </td>
+                  <td
+                    className={
+                      hasVehicleData
+                        ? metrics.adaptive.avgWaitSec <= metrics.fixed.avgWaitSec
+                          ? 'delta-good'
+                          : 'delta-warn'
+                        : ''
+                    }
+                  >
+                    {hasVehicleData
+                      ? `${(metrics.adaptive.avgWaitSec - metrics.fixed.avgWaitSec).toFixed(2)}s`
+                      : '--'}
                   </td>
                 </tr>
                 <tr>
-                  <td>Idle Green Time (s)</td>
-                  <td>{metrics.fixed.idleGreenSec.toFixed(1)}s</td>
-                  <td className="val-bold">{metrics.adaptive.idleGreenSec.toFixed(1)}s</td>
-                  <td className={metrics.adaptive.idleGreenSec <= metrics.fixed.idleGreenSec ? 'delta-good' : 'delta-warn'}>
-                    {(metrics.adaptive.idleGreenSec - metrics.fixed.idleGreenSec).toFixed(1)}s
+                  <td>Idle green time</td>
+                  <td>{snapshot.timestamp > 0 ? `${metrics.fixed.idleGreenSec.toFixed(1)}s` : '--'}</td>
+                  <td className="val-bold">
+                    {snapshot.timestamp > 0 ? `${metrics.adaptive.idleGreenSec.toFixed(1)}s` : '--'}
+                  </td>
+                  <td
+                    className={
+                      snapshot.timestamp > 0
+                        ? metrics.adaptive.idleGreenSec <= metrics.fixed.idleGreenSec
+                          ? 'delta-good'
+                          : 'delta-warn'
+                        : ''
+                    }
+                  >
+                    {snapshot.timestamp > 0
+                      ? `${(metrics.adaptive.idleGreenSec - metrics.fixed.idleGreenSec).toFixed(1)}s`
+                      : '--'}
                   </td>
                 </tr>
                 <tr>
-                  <td>Throughput (vehicles)</td>
-                  <td>{metrics.fixed.throughput}</td>
-                  <td className="val-bold">{metrics.adaptive.throughput}</td>
-                  <td className={metrics.adaptive.throughput >= metrics.fixed.throughput ? 'delta-good' : 'delta-warn'}>
-                    {metrics.adaptive.throughput - metrics.fixed.throughput >= 0 ? '+' : ''}
-                    {metrics.adaptive.throughput - metrics.fixed.throughput}
+                  <td>Throughput (veh)</td>
+                  <td>{snapshot.timestamp > 0 ? metrics.fixed.throughput : '--'}</td>
+                  <td className="val-bold">
+                    {snapshot.timestamp > 0 ? metrics.adaptive.throughput : '--'}
+                  </td>
+                  <td
+                    className={
+                      snapshot.timestamp > 0
+                        ? metrics.adaptive.throughput >= metrics.fixed.throughput
+                          ? 'delta-good'
+                          : 'delta-warn'
+                        : ''
+                    }
+                  >
+                    {snapshot.timestamp > 0
+                      ? `${metrics.adaptive.throughput - metrics.fixed.throughput >= 0 ? '+' : ''}${metrics.adaptive.throughput - metrics.fixed.throughput}`
+                      : '--'}
                   </td>
                 </tr>
                 <tr>
-                  <td>Emergency Time-to-Green (s)</td>
+                  <td>Emergency time-to-green</td>
                   <td>
                     {metrics.fixed.emgEvents > 0
                       ? `${metrics.fixed.emgAvgTimeToGreenSec.toFixed(2)}s`
-                      : '—'}
+                      : '--'}
                   </td>
                   <td className="val-bold">
                     {metrics.adaptive.emgEvents > 0
                       ? `${metrics.adaptive.emgAvgTimeToGreenSec.toFixed(2)}s`
-                      : '—'}
+                      : '--'}
                   </td>
                   <td
                     className={
@@ -618,11 +674,11 @@ export default function SimulationPage() {
                   >
                     {metrics.adaptive.emgEvents > 0
                       ? `${(metrics.adaptive.emgAvgTimeToGreenSec - metrics.fixed.emgAvgTimeToGreenSec).toFixed(2)}s`
-                      : `${metrics.adaptive.emgEvents} events`}
+                      : '--'}
                   </td>
                 </tr>
                 <tr>
-                  <td>Currently Queued Vehicles</td>
+                  <td>Queued vehicles</td>
                   <td>{metrics.fixed.totalQueued}</td>
                   <td className="val-bold">{metrics.adaptive.totalQueued}</td>
                   <td className={metrics.adaptive.totalQueued <= metrics.fixed.totalQueued ? 'delta-good' : 'delta-warn'}>
@@ -637,9 +693,10 @@ export default function SimulationPage() {
         <div className="sim-card">
           <div className="sim-card-header">
             <div>
-              <h3><AlertTriangle size={17} /> Controller Transition Audit Log</h3>
+              <h3><AlertTriangle size={16} strokeWidth={1.75} /> Phase Timeline &amp; Transition Log</h3>
               <p className="sim-card-sub">Latest state transitions (newest first)</p>
             </div>
+            <span className="badge-neutral">{transitions.length} events</span>
           </div>
 
           <div className="log-list sim-log-list">
@@ -657,9 +714,7 @@ export default function SimulationPage() {
                 </div>
               ))
             ) : (
-              <div className="log-empty">
-                No transitions recorded yet. Let the simulation run or trigger an emergency scenario.
-              </div>
+              <div className="empty-state-box">No phase transitions recorded</div>
             )}
           </div>
         </div>

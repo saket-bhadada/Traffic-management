@@ -36,14 +36,11 @@ export default function App() {
     <div className="dashboard-container">
       <header className="header">
         <div className="header-left">
-          <div className="sys-id-badge">
-            <span className="sys-dot" />
-            CHOWK-04
-          </div>
+          <span className="sys-id-badge">CHOWK-04</span>
           <div>
-            <h1>Adaptive Signal Control &amp; Preemption Console</h1>
+            <h1>Traffic Signal Operations Console</h1>
             <p className="subtitle">
-              YOLOv8s &middot; 2L-LSTM &middot; 5-State Deterministic Controller
+              4-Way Junction Control &middot; YOLOv8 Detection &middot; LSTM Queue Forecast
             </p>
           </div>
         </div>
@@ -55,7 +52,7 @@ export default function App() {
             className={`nav-link ${route === '/' ? 'active' : ''}`}
             onClick={() => navigate('/')}
           >
-            <Video size={15} /> Live Camera Feed
+            <Video size={16} strokeWidth={1.75} /> Live Camera Feed
           </button>
           <button
             type="button"
@@ -63,7 +60,7 @@ export default function App() {
             className={`nav-link ${route === '/simulation' ? 'active' : ''}`}
             onClick={() => navigate('/simulation')}
           >
-            <GitBranch size={15} /> Signal Simulation
+            <GitBranch size={16} strokeWidth={1.75} /> Signal Simulation
           </button>
         </nav>
       </header>

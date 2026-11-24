@@ -588,24 +588,21 @@ export default function ThreeIntersectionScene({ snapshot }) {
         refs.amberMat.emissiveIntensity = isAmber ? 2.8 : 0.05;
         refs.greenMat.emissiveIntensity = isGreen ? 2.8 : 0.05;
 
-        const hex = isGreen ? 0x10b981 : isAmber ? 0xf59e0b : 0xef4444;
+        const hex = isGreen ? 0x16a34a : isAmber ? 0xd97706 : 0xdc2626;
         refs.stripMat.color.setHex(hex);
         refs.stripMat.emissive.setHex(hex);
-        refs.stripMat.emissiveIntensity = isGreen ? 1.4 : isAmber ? 1.2 : 0.45;
+        refs.stripMat.emissiveIntensity = isGreen ? 1.3 : isAmber ? 1.1 : 0.4;
         refs.light.color.setHex(hex);
-        refs.light.intensity = isGreen || isAmber ? 3.2 : 1.4;
+        refs.light.intensity = isGreen || isAmber ? 3.0 : 1.2;
       }
 
       // Center box ring status
-      if (snap.state === SignalState.ALL_RED) {
-        boxRingMat.emissive.setHex(0xef4444);
-        boxRingMat.emissiveIntensity = 1.2 + 0.5 * Math.sin(now * 0.012);
-      } else if (snap.state === SignalState.EMERGENCY_GREEN) {
-        boxRingMat.emissive.setHex(0xef4444);
-        boxRingMat.emissiveIntensity = 0.9 + 0.6 * Math.sin(now * 0.015);
+      if (snap.state === SignalState.ALL_RED || snap.state === SignalState.EMERGENCY_GREEN) {
+        boxRingMat.emissive.setHex(0xdc2626);
+        boxRingMat.emissiveIntensity = 1.1;
       } else if (snap.state === SignalState.TRUNCATED_GREEN) {
-        boxRingMat.emissive.setHex(0xf59e0b);
-        boxRingMat.emissiveIntensity = 1.0;
+        boxRingMat.emissive.setHex(0xd97706);
+        boxRingMat.emissiveIntensity = 0.9;
       } else {
         boxRingMat.emissive.setHex(0x000000);
         boxRingMat.emissiveIntensity = 0.0;
