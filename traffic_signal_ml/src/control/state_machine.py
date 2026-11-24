@@ -51,6 +51,10 @@ class StateMachineConfig:
     all_red_duration: float = 1.0
     preempt_remaining_threshold: float = 4.0
     truncated_green_duration: float = 2.0
+    car_count_switching_enabled: bool = True
+    car_count_switch_margin: float = 5.0
+    car_count_switch_buffer: float = 6.0
+    max_lane_red_wait: float = 90.0
 
 
 def compute_adaptive_green(
@@ -104,14 +108,72 @@ class PreemptionStateMachine:
     clockwise_index: int = 0
     preempt_target_lane: Optional[str] = None
     resume_clockwise_index: Optional[int] = None
+    lane_red_wait: Dict[str, float] = field(default_factory=dict)
+    demand_switch_target: Optional[str] = None
+    demand_buffer_elapsed: float = 0.0
+    next_demand_lane: Optional[str] = None
     transitions: List[TransitionLog] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.active_lane = self.config.phase_order[self.clockwise_index]
         self.remaining_time = float(self.config.base_green)
+        if not self.lane_red_wait:
+            self.lane_red_wait = {lane: 0.0 for lane in self.config.phase_order}
 
     def _next_clockwise_index(self, idx: int) -> int:
         return (idx + 1) % len(self.config.phase_order)
+
+    def _clear_demand_switch(self, clear_next: bool = False) -> None:
+        self.demand_switch_target = None
+        self.demand_buffer_elapsed = 0.0
+        if clear_next:
+            self.next_demand_lane = None
+
+    def _update_lane_red_waits(self, standard_counts: Dict[str, float], dt: float) -> None:
+        green_states = (
+            SignalState.ADAPTIVE_GREEN,
+            SignalState.TRUNCATED_GREEN,
+            SignalState.EMERGENCY_GREEN,
+        )
+        for lane in self.config.phase_order:
+            is_green = self.state in green_states and lane == self.active_lane
+            if is_green or float(standard_counts.get(lane, 0.0)) <= 0.0:
+                self.lane_red_wait[lane] = 0.0
+            else:
+                self.lane_red_wait[lane] = self.lane_red_wait.get(lane, 0.0) + dt
+
+    def _select_highest_count_lane(
+        self,
+        standard_counts: Dict[str, float],
+        exclude_lane: Optional[str] = None,
+    ) -> Optional[str]:
+        """Select highest-demand waiting lane (with starvation guard and clockwise tie-break)."""
+        n = len(self.config.phase_order)
+        start_idx = (self.clockwise_index + 1) % n
+        ordered_lanes = [self.config.phase_order[(start_idx + offset) % n] for offset in range(n)]
+        candidates = [
+            lane
+            for lane in ordered_lanes
+            if lane != exclude_lane and float(standard_counts.get(lane, 0.0)) > 0.0
+        ]
+        if not candidates:
+            return None
+
+        starving = [
+            lane
+            for lane in candidates
+            if self.lane_red_wait.get(lane, 0.0) >= self.config.max_lane_red_wait
+        ]
+        if starving:
+            return max(
+                starving,
+                key=lambda lane: (
+                    self.lane_red_wait.get(lane, 0.0),
+                    float(standard_counts.get(lane, 0.0)),
+                ),
+            )
+
+        return max(candidates, key=lambda lane: float(standard_counts.get(lane, 0.0)))
 
     def _select_emergency_lane(self, emergency_counts: Dict[str, float]) -> Optional[str]:
         """Select lane j with E_j > 0. Prioritizes active lane if it has an emergency, else clockwise from active."""
@@ -148,6 +210,39 @@ class PreemptionStateMachine:
         self.active_lane = new_active_lane
         self.remaining_time = float(duration)
         self.elapsed_in_state = 0.0
+        if new_state in (SignalState.ADAPTIVE_GREEN, SignalState.EMERGENCY_GREEN):
+            self.lane_red_wait[new_active_lane] = 0.0
+
+    def _evaluate_demand_switch(
+        self,
+        standard_counts: Dict[str, float],
+        dt: float,
+    ) -> Optional[str]:
+        """Update and check sustained car-count switch buffer during ADAPTIVE_GREEN."""
+        if not self.config.car_count_switching_enabled:
+            self._clear_demand_switch()
+            return None
+
+        c_active = float(standard_counts.get(self.active_lane, 0.0))
+        best_waiting = self._select_highest_count_lane(standard_counts, exclude_lane=self.active_lane)
+        if best_waiting is None:
+            self._clear_demand_switch()
+            return None
+
+        c_best = float(standard_counts.get(best_waiting, 0.0))
+        best_wait = self.lane_red_wait.get(best_waiting, 0.0)
+        condition_holds = (
+            c_active <= 0.0
+            or c_best >= c_active + self.config.car_count_switch_margin
+            or best_wait >= self.config.max_lane_red_wait
+        )
+        if not condition_holds:
+            self._clear_demand_switch()
+            return None
+
+        self.demand_switch_target = best_waiting
+        self.demand_buffer_elapsed += dt
+        return best_waiting
 
     def step(
         self,
@@ -158,6 +253,7 @@ class PreemptionStateMachine:
         dt: float = 1.0,
     ) -> SignalState:
         """Advance the state machine by one second (dt=1.0) and return current SignalState."""
+        self._update_lane_red_waits(standard_counts, dt)
         emg_lane = self._select_emergency_lane(emergency_counts)
 
         # 1. Handle ADAPTIVE_GREEN
@@ -179,6 +275,7 @@ class PreemptionStateMachine:
 
             # Check for emergency preemption trigger
             if emg_lane is not None and self.preempt_target_lane is None:
+                self._clear_demand_switch(clear_next=True)
                 self.resume_clockwise_index = self._next_clockwise_index(self.clockwise_index)
                 self.preempt_target_lane = emg_lane
 
@@ -223,10 +320,41 @@ class PreemptionStateMachine:
                         )
                     )
 
+            demand_candidate = (
+                self._evaluate_demand_switch(standard_counts, dt)
+                if self.preempt_target_lane is None
+                else None
+            )
+
             # Advance timer in ADAPTIVE_GREEN
             self.elapsed_in_state += dt
             self.remaining_time = max(0.0, self.remaining_time - dt)
+
+            if (
+                demand_candidate is not None
+                and self.preempt_target_lane is None
+                and self.elapsed_in_state >= self.config.min_green
+                and self.demand_buffer_elapsed >= self.config.car_count_switch_buffer
+            ):
+                c_active = float(standard_counts.get(self.active_lane, 0.0))
+                c_best = float(standard_counts.get(demand_candidate, 0.0))
+                self.next_demand_lane = demand_candidate
+                self._clear_demand_switch()
+                self._transition(
+                    timestamp=timestamp,
+                    new_state=SignalState.AMBER,
+                    new_active_lane=self.active_lane,
+                    duration=self.config.amber_duration,
+                    reason=(
+                        f"Car-count switch buffer ({self.config.car_count_switch_buffer:.1f}s) elapsed on "
+                        f"{self.active_lane} -> switching to lane {demand_candidate} "
+                        f"(C_{demand_candidate}={c_best:.0f}, C_{self.active_lane}={c_active:.0f})"
+                    ),
+                )
+                return self.state
+
             if self.remaining_time <= 0.0:
+                self._clear_demand_switch()
                 reason = (
                     f"Preemption expiry on {self.active_lane} for emergency on {self.preempt_target_lane}"
                     if self.preempt_target_lane is not None
@@ -259,6 +387,7 @@ class PreemptionStateMachine:
         if self.state == SignalState.AMBER:
             # If an emergency arrives during normal AMBER when not already preempting:
             if emg_lane is not None and self.preempt_target_lane is None:
+                self._clear_demand_switch(clear_next=True)
                 self.preempt_target_lane = emg_lane
                 self.resume_clockwise_index = self._next_clockwise_index(self.clockwise_index)
 
@@ -277,6 +406,7 @@ class PreemptionStateMachine:
         # 4. Handle ALL_RED
         if self.state == SignalState.ALL_RED:
             if emg_lane is not None and self.preempt_target_lane is None:
+                self._clear_demand_switch(clear_next=True)
                 self.preempt_target_lane = emg_lane
                 self.resume_clockwise_index = self._next_clockwise_index(self.clockwise_index)
 
@@ -293,12 +423,35 @@ class PreemptionStateMachine:
                         reason=f"ALL_RED expired; granting EMERGENCY_GREEN to lane {target}",
                     )
                 else:
-                    # Normal or post-preemption clockwise transition
+                    # Normal, demand-switched, or post-preemption transition
                     if self.resume_clockwise_index is not None:
                         self.clockwise_index = self.resume_clockwise_index
                         self.resume_clockwise_index = None
+                        self._clear_demand_switch(clear_next=True)
                         reason_prefix = "Resuming clockwise cycle after preemption at phase"
+                    elif self.config.car_count_switching_enabled:
+                        chosen: Optional[str] = None
+                        if (
+                            self.next_demand_lane is not None
+                            and float(standard_counts.get(self.next_demand_lane, 0.0)) > 0.0
+                        ):
+                            chosen = self.next_demand_lane
+                        else:
+                            chosen = self._select_highest_count_lane(
+                                standard_counts, exclude_lane=self.active_lane
+                            )
+                        self._clear_demand_switch(clear_next=True)
+                        if chosen is not None:
+                            self.clockwise_index = self.config.phase_order.index(chosen)
+                            c_chosen = float(standard_counts.get(chosen, 0.0))
+                            reason_prefix = (
+                                f"Switching by car-count demand (C_{chosen}={c_chosen:.0f}) to phase"
+                            )
+                        else:
+                            self.clockwise_index = self._next_clockwise_index(self.clockwise_index)
+                            reason_prefix = "Advancing clockwise cycle to phase"
                     else:
+                        self._clear_demand_switch(clear_next=True)
                         self.clockwise_index = self._next_clockwise_index(self.clockwise_index)
                         reason_prefix = "Advancing clockwise cycle to phase"
 

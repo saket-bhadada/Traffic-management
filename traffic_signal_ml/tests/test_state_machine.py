@@ -226,3 +226,184 @@ def test_preemption_less_than_or_equal_4s_branch_expires_normally() -> None:
     sm.step(18.0, zero_c, zero_e, zero_dc)
     assert sm.state == SignalState.ADAPTIVE_GREEN
     assert sm.active_lane == "E"
+
+
+def test_car_count_buffered_switch_waits_for_min_green_and_buffer() -> None:
+    """Verify car-count switch enforces min_green + sustained buffer, resets on transient blips,
+    and switches via AMBER (3s) -> ALL_RED (1s) to the highest-count lane."""
+    cfg = StateMachineConfig(
+        base_green=15.0,
+        k1=1.5,
+        min_green=10.0,
+        max_green=60.0,
+        amber_duration=3.0,
+        all_red_duration=1.0,
+        car_count_switching_enabled=True,
+        car_count_switch_margin=5.0,
+        car_count_switch_buffer=6.0,
+    )
+    sm = PreemptionStateMachine(config=cfg)
+    zero_e = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
+    zero_dc = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
+
+    # Transient spike on S for 3 seconds (below 6s buffer) -> must NOT switch and must reset buffer
+    heavy_s = {"N": 6.0, "E": 1.0, "S": 14.0, "W": 1.0}
+    balanced = {"N": 6.0, "E": 1.0, "S": 6.0, "W": 1.0}
+    for t in range(3):
+        state = sm.step(float(t), heavy_s, zero_e, zero_dc)
+        assert state == SignalState.ADAPTIVE_GREEN
+        assert sm.demand_buffer_elapsed == pytest.approx(float(t + 1))
+
+    # Drop counts back within margin at t=3 -> buffer must reset to 0
+    sm.step(3.0, balanced, zero_e, zero_dc)
+    assert sm.demand_buffer_elapsed == pytest.approx(0.0)
+    assert sm.demand_switch_target is None
+
+    # Advance up to t=7 (elapsed=8) with balanced counts, then hold heavy_s across t=8..13
+    for t in range(4, 8):
+        sm.step(float(t), balanced, zero_e, zero_dc)
+    assert sm.state == SignalState.ADAPTIVE_GREEN
+
+    # t=8,9: crosses min_green=10 at t=9, but buffer only at 2s -> still GREEN
+    sm.step(8.0, heavy_s, zero_e, zero_dc)
+    sm.step(9.0, heavy_s, zero_e, zero_dc)
+    assert sm.state == SignalState.ADAPTIVE_GREEN
+    assert sm.elapsed_in_state == pytest.approx(10.0)
+    assert sm.demand_buffer_elapsed == pytest.approx(2.0)
+
+    # t=10,11,12: buffer at 3,4,5s -> still GREEN
+    for t in (10, 11, 12):
+        state = sm.step(float(t), heavy_s, zero_e, zero_dc)
+        assert state == SignalState.ADAPTIVE_GREEN
+
+    # t=13: buffer reaches 6s (>= 6s) and elapsed >= 10s -> triggers AMBER (3s)
+    state = sm.step(13.0, heavy_s, zero_e, zero_dc)
+    assert state == SignalState.AMBER
+    assert sm.active_lane == "N"
+    assert sm.remaining_time == pytest.approx(3.0)
+
+    # 3s AMBER + 1s ALL_RED -> switches directly to S (skipping E)
+    for t in (14.0, 15.0, 16.0):
+        sm.step(t, heavy_s, zero_e, zero_dc)
+    assert sm.state == SignalState.ALL_RED
+    sm.step(17.0, heavy_s, zero_e, zero_dc)
+    assert sm.state == SignalState.ADAPTIVE_GREEN
+    assert sm.active_lane == "S"
+
+
+def test_car_count_empty_lane_switches_early_after_buffer() -> None:
+    """Verify an empty green lane (C_i == 0) with waiting cars on S switches early after min_green + buffer."""
+    cfg = StateMachineConfig(
+        base_green=25.0,
+        min_green=10.0,
+        max_green=60.0,
+        amber_duration=3.0,
+        all_red_duration=1.0,
+        car_count_switching_enabled=True,
+        car_count_switch_margin=5.0,
+        car_count_switch_buffer=6.0,
+    )
+    sm = PreemptionStateMachine(config=cfg)
+    zero_e = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
+    zero_dc = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
+    counts = {"N": 0.0, "E": 1.0, "S": 3.0, "W": 0.0}
+
+    # During first 9 ticks (t=0..8), must remain GREEN due to min_green=10s
+    for t in range(9):
+        state = sm.step(float(t), counts, zero_e, zero_dc)
+        assert state == SignalState.ADAPTIVE_GREEN
+
+    # At t=9 (10th tick), elapsed=10s >= min_green and buffer=10s >= 6s -> enters AMBER
+    state = sm.step(9.0, counts, zero_e, zero_dc)
+    assert state == SignalState.AMBER
+
+    for t in (10.0, 11.0, 12.0):
+        sm.step(t, counts, zero_e, zero_dc)
+    assert sm.state == SignalState.ALL_RED
+    sm.step(13.0, counts, zero_e, zero_dc)
+    assert sm.state == SignalState.ADAPTIVE_GREEN
+    assert sm.active_lane == "S"
+
+
+def test_car_count_starvation_guard_prioritizes_long_waiting_lane() -> None:
+    """Verify a waiting lane reaching max_lane_red_wait is prioritized ahead of a slightly busier lane."""
+    cfg = StateMachineConfig(
+        base_green=15.0,
+        min_green=10.0,
+        max_green=60.0,
+        amber_duration=3.0,
+        all_red_duration=1.0,
+        car_count_switching_enabled=True,
+        car_count_switch_margin=5.0,
+        car_count_switch_buffer=6.0,
+        max_lane_red_wait=20.0,
+    )
+    sm = PreemptionStateMachine(config=cfg)
+    sm.lane_red_wait["W"] = 19.0
+    zero_e = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
+    zero_dc = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
+    # S has more cars (8 vs W's 2), while N has 6 cars (so neither beats margin +5 on raw count),
+    # yet W hits max_lane_red_wait (20s) on the first tick!
+    counts = {"N": 6.0, "E": 1.0, "S": 8.0, "W": 2.0}
+
+    for t in range(10):
+        state = sm.step(float(t), counts, zero_e, zero_dc)
+        if t < 9:
+            assert state == SignalState.ADAPTIVE_GREEN
+    assert sm.state == SignalState.AMBER
+
+    for t in (10.0, 11.0, 12.0):
+        sm.step(t, counts, zero_e, zero_dc)
+    sm.step(13.0, counts, zero_e, zero_dc)
+    assert sm.state == SignalState.ADAPTIVE_GREEN
+    assert sm.active_lane == "W"
+
+
+def test_emergency_preemption_overrides_pending_car_count_buffer() -> None:
+    """Verify emergency preemption clears pending car-count buffer and resumes clockwise at (i+1)."""
+    cfg = StateMachineConfig(
+        base_green=15.0,
+        min_green=10.0,
+        max_green=60.0,
+        amber_duration=3.0,
+        all_red_duration=1.0,
+        preempt_remaining_threshold=4.0,
+        truncated_green_duration=2.0,
+        car_count_switching_enabled=True,
+        car_count_switch_margin=5.0,
+        car_count_switch_buffer=6.0,
+    )
+    sm = PreemptionStateMachine(config=cfg)
+    heavy_s = {"N": 6.0, "E": 1.0, "S": 18.0, "W": 1.0}
+    zero_e = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
+    zero_dc = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 0.0}
+
+    # Build up 3s of car-count switch buffer targeting S
+    for t in range(3):
+        sm.step(float(t), heavy_s, zero_e, zero_dc)
+    assert sm.demand_switch_target == "S"
+    assert sm.demand_buffer_elapsed == pytest.approx(3.0)
+
+    # Emergency arrives on W at t=3 -> clears car-count buffer and enters TRUNCATED_GREEN
+    emg_w = {"N": 0.0, "E": 0.0, "S": 0.0, "W": 1.0}
+    state = sm.step(3.0, heavy_s, emg_w, zero_dc)
+    assert state == SignalState.TRUNCATED_GREEN
+    assert sm.demand_switch_target is None
+    assert sm.demand_buffer_elapsed == pytest.approx(0.0)
+    assert sm.next_demand_lane is None
+
+    # Complete truncation (2s) -> AMBER (3s) -> ALL_RED (1s) -> EMERGENCY_GREEN on W
+    for t in range(4, 10):
+        sm.step(float(t), heavy_s, emg_w, zero_dc)
+    assert sm.state == SignalState.EMERGENCY_GREEN
+    assert sm.active_lane == "W"
+
+    # Clear emergency on W -> AMBER (3s) -> ALL_RED (1s) -> strictly resumes (i+1)='E' despite S=18
+    sm.step(10.0, heavy_s, zero_e, zero_dc)
+    assert sm.state == SignalState.AMBER
+    for t in (11.0, 12.0, 13.0):
+        sm.step(t, heavy_s, zero_e, zero_dc)
+    assert sm.state == SignalState.ALL_RED
+    sm.step(14.0, heavy_s, zero_e, zero_dc)
+    assert sm.state == SignalState.ADAPTIVE_GREEN
+    assert sm.active_lane == "E"
